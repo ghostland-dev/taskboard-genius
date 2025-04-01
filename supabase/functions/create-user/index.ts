@@ -21,35 +21,32 @@ serve(async (req) => {
   }
 
   try {
-    // Check if we have an authorization header for the authenticated admin
-    const authHeader = req.headers.get('Authorization');
+    // Create a Supabase client with the service role key
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
     
+    // Get the JWT from the request headers
+    const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      console.error("Missing Authorization header");
+      console.log("No Authorization header provided");
       return new Response(
-        JSON.stringify({ error: "Unauthorized - Missing authorization header" }),
+        JSON.stringify({ error: "Non autorisé - En-tête d'autorisation manquant" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Create a Supabase client with the Auth context
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: authHeader },
-        },
-      }
-    );
-
-    // Get the current admin user to check permissions
-    const { data: { user: adminUser }, error: adminUserError } = await supabaseAdmin.auth.getUser();
-
-    if (adminUserError || !adminUser) {
-      console.error("Error fetching admin user:", adminUserError);
+    // Get the JWT from the Authorization header
+    const token = authHeader.replace('Bearer ', '');
+    
+    // Verify the JWT and get the user
+    const { data: { user: adminUser }, error: jwtError } = await supabaseAdmin.auth.getUser(token);
+    
+    if (jwtError || !adminUser) {
+      console.error("Error verifying JWT:", jwtError);
       return new Response(
-        JSON.stringify({ error: adminUserError?.message || "Unauthorized" }),
+        JSON.stringify({ error: jwtError?.message || "Session non valide" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -71,14 +68,16 @@ serve(async (req) => {
 
     // Check if admin has superadmin rights
     if (adminProfile.role !== 'superadmin') {
+      console.log("User is not superadmin:", adminProfile.role);
       return new Response(
-        JSON.stringify({ error: "Unauthorized - Only superadmins can create users" }),
+        JSON.stringify({ error: "Non autorisé - Seuls les superadmins peuvent créer des utilisateurs" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     // Parse request body
     const userData: NewUserData = await req.json();
+    console.log("Creating user with data:", JSON.stringify(userData));
 
     // Generate a random password
     const password = Math.random().toString(36).slice(-10);

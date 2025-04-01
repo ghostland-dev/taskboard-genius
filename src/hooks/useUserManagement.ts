@@ -4,6 +4,7 @@ import { User } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SubscriptionPlan, useSubscription } from "@/hooks/useSubscription";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface NewUserData {
   email: string;
@@ -19,6 +20,7 @@ export const useUserManagement = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [subscriptionPlan, setSubscriptionPlan] = useState<SubscriptionPlan>("trial");
   const [userRole, setUserRole] = useState<string>("user");
+  const { user: currentUser } = useAuth();
   const { updateUserSubscription } = useSubscription();
 
   const fetchUsers = async () => {
@@ -80,6 +82,14 @@ export const useUserManagement = () => {
 
   const handleDeleteUser = async (userId: string) => {
     try {
+      // Make sure we're authenticated properly
+      const { data: authData } = await supabase.auth.getSession();
+      
+      if (!authData.session) {
+        toast.error("Vous devez être connecté pour effectuer cette action");
+        return false;
+      }
+      
       // Delete the user from auth
       const { error: authError } = await supabase.functions.invoke("delete-user", {
         body: { userId },
@@ -103,6 +113,20 @@ export const useUserManagement = () => {
 
   const createNewUser = async (userData: NewUserData): Promise<boolean> => {
     try {
+      // Check if current user is authenticated and has proper permissions
+      if (!currentUser || currentUser.role !== "superadmin") {
+        toast.error("Vous n'avez pas les permissions nécessaires pour créer un utilisateur");
+        return false;
+      }
+
+      // Get the current session to include in the function call
+      const { data: authData } = await supabase.auth.getSession();
+      
+      if (!authData.session) {
+        toast.error("Vous devez être connecté pour créer un utilisateur");
+        return false;
+      }
+
       // Create user with Supabase Auth
       const { data, error } = await supabase.functions.invoke("create-user", {
         body: userData,
@@ -110,7 +134,7 @@ export const useUserManagement = () => {
 
       if (error) {
         console.error("Error creating user:", error);
-        toast.error(`Erreur lors de la création de l'utilisateur: ${error.message}`);
+        toast.error(`Erreur lors de la création de l'utilisateur: ${error.message || "Veuillez vérifier vos permissions"}`);
         return false;
       }
 
