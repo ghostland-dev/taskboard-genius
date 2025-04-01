@@ -7,6 +7,9 @@ import { AuthContextType, UserProfile } from "@/types/auth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { authService } from "@/services/authService";
 
+// Note: For development, it's recommended to disable email confirmation in
+// the Supabase Dashboard under Authentication > Email Templates > Email Confirmation
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = (): AuthContextType => {

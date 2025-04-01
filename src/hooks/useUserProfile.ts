@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
-import { SupabaseProfileRow, UserProfile } from "@/types/auth";
+import { UserProfile } from "@/types/auth";
 
 export const useUserProfile = () => {
   const loadUserProfile = async (userId: string, userSession: Session | null): Promise<UserProfile | null> => {
@@ -10,7 +10,7 @@ export const useUserProfile = () => {
         .from("profiles")
         .select("*")
         .eq("id", userId)
-        .single<SupabaseProfileRow>();
+        .single();
 
       if (error) {
         console.error("Erreur chargement profil:", error);
