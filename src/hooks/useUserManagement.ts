@@ -5,6 +5,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SubscriptionPlan, useSubscription } from "@/hooks/useSubscription";
 
+interface NewUserData {
+  email: string;
+  name: string;
+  role: string;
+  subscription: string;
+}
+
 export const useUserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,6 +78,52 @@ export const useUserManagement = () => {
     }
   };
 
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      // Delete the user from auth
+      const { error: authError } = await supabase.functions.invoke("delete-user", {
+        body: { userId },
+      });
+
+      if (authError) {
+        console.error("Error deleting user from auth:", authError);
+        toast.error(`Erreur lors de la suppression de l'utilisateur: ${authError.message}`);
+        return false;
+      }
+
+      toast.success("Utilisateur supprimé avec succès");
+      fetchUsers(); // Rafraîchir la liste des utilisateurs
+      return true;
+    } catch (err: any) {
+      console.error("Error in handleDeleteUser:", err);
+      toast.error(`Erreur: ${err.message}`);
+      return false;
+    }
+  };
+
+  const createNewUser = async (userData: NewUserData): Promise<boolean> => {
+    try {
+      // Create user with Supabase Auth
+      const { data, error } = await supabase.functions.invoke("create-user", {
+        body: userData,
+      });
+
+      if (error) {
+        console.error("Error creating user:", error);
+        toast.error(`Erreur lors de la création de l'utilisateur: ${error.message}`);
+        return false;
+      }
+
+      toast.success("Utilisateur créé avec succès");
+      fetchUsers(); // Rafraîchir la liste des utilisateurs
+      return true;
+    } catch (err: any) {
+      console.error("Error in createNewUser:", err);
+      toast.error(`Erreur: ${err.message}`);
+      return false;
+    }
+  };
+
   const openEditDialog = (user: User) => {
     setSelectedUser(user);
     setSubscriptionPlan(user.subscription as SubscriptionPlan || "trial");
@@ -90,6 +143,8 @@ export const useUserManagement = () => {
     setDialogOpen,
     fetchUsers,
     handleUpdateUser,
+    handleDeleteUser,
+    createNewUser,
     openEditDialog,
   };
 };

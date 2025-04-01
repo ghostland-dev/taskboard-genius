@@ -2,10 +2,10 @@
 import React, { useState } from "react";
 import Sidebar from "./Sidebar";
 import { useAuth } from "@/contexts/AuthContext";
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useNavigate } from "react-router-dom";
 import { Toaster } from "sonner";
 import { cn } from "@/lib/utils";
-import { Bell, Search, Settings, LogOut, Menu } from "lucide-react";
+import { Bell, Search, Settings, LogOut, Menu, User as UserIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,14 +19,24 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const Layout: React.FC = () => {
   const { isAuthenticated, user, logout } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const navigate = useNavigate();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" />;
   }
+
+  const goToSettings = () => {
+    navigate("/settings");
+  };
+
+  const goToProfile = () => {
+    navigate("/settings?tab=account");
+  };
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -63,49 +73,45 @@ const Layout: React.FC = () => {
             </div>
           </div>
           <div className="flex items-center space-x-4">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+            <Popover>
+              <PopoverTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative">
                   <Bell size={20} />
                   <Badge className="absolute top-0 right-0 h-4 w-4 flex items-center justify-center p-0 text-xs">
                     3
                   </Badge>
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80">
-                <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer py-3">
-                  <div className="flex flex-col">
-                    <span className="font-medium">Nouvelle tâche assignée</span>
-                    <span className="text-xs text-muted-foreground">Il y a 5 minutes</span>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-80 p-0">
+                <div className="font-medium border-b p-3">Notifications</div>
+                <div className="max-h-[300px] overflow-y-auto">
+                  <div className="cursor-pointer p-3 hover:bg-slate-50 border-b">
+                    <div className="font-medium">Nouvelle tâche assignée</div>
+                    <div className="text-xs text-muted-foreground mt-1">Il y a 5 minutes</div>
                   </div>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer py-3">
-                  <div className="flex flex-col">
-                    <span className="font-medium">Rappel: Tâche bientôt due</span>
-                    <span className="text-xs text-muted-foreground">Il y a 30 minutes</span>
+                  <div className="cursor-pointer p-3 hover:bg-slate-50 border-b">
+                    <div className="font-medium">Rappel: Tâche bientôt due</div>
+                    <div className="text-xs text-muted-foreground mt-1">Il y a 30 minutes</div>
                   </div>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer py-3">
-                  <div className="flex flex-col">
-                    <span className="font-medium">Mise à jour système</span>
-                    <span className="text-xs text-muted-foreground">Il y a 2 heures</span>
+                  <div className="cursor-pointer p-3 hover:bg-slate-50">
+                    <div className="font-medium">Mise à jour système</div>
+                    <div className="text-xs text-muted-foreground mt-1">Il y a 2 heures</div>
                   </div>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer text-center text-primary">
-                  Voir toutes les notifications
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                </div>
+                <div className="p-2 border-t text-center">
+                  <Button variant="ghost" className="w-full text-sm text-primary">
+                    Voir toutes les notifications
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center space-x-2">
                   <Avatar className="h-8 w-8 border border-slate-200">
                     <AvatarImage src="" alt={user?.name} />
-                    <AvatarFallback className="bg-primary/10 text-primary">{user?.name.charAt(0)}</AvatarFallback>
+                    <AvatarFallback className="bg-primary/10 text-primary">{user?.name?.charAt(0) || "U"}</AvatarFallback>
                   </Avatar>
                   <span className="font-medium text-sm hidden md:inline-block">{user?.name}</span>
                 </Button>
@@ -120,10 +126,15 @@ const Layout: React.FC = () => {
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer flex items-center">
+                <DropdownMenuItem className="cursor-pointer flex items-center" onClick={goToProfile}>
+                  <UserIcon className="mr-2 h-4 w-4" />
+                  Mon profil
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer flex items-center" onClick={goToSettings}>
                   <Settings className="mr-2 h-4 w-4" />
                   Paramètres
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem className="cursor-pointer text-destructive flex items-center" onClick={logout}>
                   <LogOut className="mr-2 h-4 w-4" />
                   Déconnexion

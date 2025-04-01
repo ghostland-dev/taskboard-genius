@@ -4,13 +4,23 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { User } from "@/types/user";
 import { formatDate } from "@/lib/utils-date";
+import { Edit, Trash2 } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface UserTableProps {
   users: User[];
   onEditUser: (user: User) => void;
+  onDeleteUser: (user: User) => void;
 }
 
-const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
+const UserTable: React.FC<UserTableProps> = ({ users, onEditUser, onDeleteUser }) => {
   const getSubscriptionBadgeStyle = (subscription?: string) => {
     switch (subscription) {
       case "premium":
@@ -37,50 +47,67 @@ const UserTable: React.FC<UserTableProps> = ({ users, onEditUser }) => {
     }
   };
 
+  if (users.length === 0) {
+    return <div className="p-4 text-center text-gray-500">Aucun résultat trouvé</div>;
+  }
+
   return (
-    <table className="w-full">
-      <thead>
-        <tr className="border-b">
-          <th className="px-6 py-3 text-left font-medium text-slate-700">Nom</th>
-          <th className="px-6 py-3 text-left font-medium text-slate-700">Email</th>
-          <th className="px-6 py-3 text-left font-medium text-slate-700">Rôle</th>
-          <th className="px-6 py-3 text-left font-medium text-slate-700">Abonnement</th>
-          <th className="px-6 py-3 text-left font-medium text-slate-700">Inscription</th>
-          <th className="px-6 py-3 text-left font-medium text-slate-700">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Nom</TableHead>
+          <TableHead>Email</TableHead>
+          <TableHead>Rôle</TableHead>
+          <TableHead>Abonnement</TableHead>
+          <TableHead>Inscription</TableHead>
+          <TableHead className="text-right">Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
         {users.map((user) => (
-          <tr key={user.id} className="border-b hover:bg-slate-50">
-            <td className="px-6 py-4">{user.name || "N/A"}</td>
-            <td className="px-6 py-4">{user.email || "N/A"}</td>
-            <td className="px-6 py-4">
-              <Badge variant={user.role === "superadmin" ? "default" : "outline"}>
-                {user.role === "superadmin" ? "Super Admin" : "Utilisateur"}
+          <TableRow key={user.id} className="hover:bg-slate-50">
+            <TableCell className="font-medium">{user.name || "N/A"}</TableCell>
+            <TableCell>{user.email || "N/A"}</TableCell>
+            <TableCell>
+              <Badge variant={user.role === "superadmin" ? "default" : "outline"} className={user.role === "admin" ? "bg-blue-100 text-blue-800 border-blue-200" : ""}>
+                {user.role === "superadmin" ? "Super Admin" : user.role === "admin" ? "Admin" : "Utilisateur"}
               </Badge>
-            </td>
-            <td className="px-6 py-4">
+            </TableCell>
+            <TableCell>
               <Badge 
                 variant="outline" 
                 className={getSubscriptionBadgeStyle(user.subscription)}
               >
                 {getSubscriptionLabel(user.subscription)}
               </Badge>
-            </td>
-            <td className="px-6 py-4">{formatDate(user.created_at)}</td>
-            <td className="px-6 py-4">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => onEditUser(user)}
-              >
-                Modifier
-              </Button>
-            </td>
-          </tr>
+            </TableCell>
+            <TableCell>{formatDate(user.created_at)}</TableCell>
+            <TableCell className="text-right">
+              <div className="flex items-center justify-end gap-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => onEditUser(user)}
+                  className="h-8 w-8 p-0"
+                >
+                  <Edit className="h-4 w-4" />
+                  <span className="sr-only">Modifier</span>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => onDeleteUser(user)}
+                  className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span className="sr-only">Supprimer</span>
+                </Button>
+              </div>
+            </TableCell>
+          </TableRow>
         ))}
-      </tbody>
-    </table>
+      </TableBody>
+    </Table>
   );
 };
 
