@@ -61,7 +61,10 @@ export const authService = {
       }
 
       const options = {
-        data: { name: sanitizedName }
+        data: { name: sanitizedName },
+        emailRedirectTo: window.location.origin,
+        // Configuration pour désactiver la vérification par email
+        emailConfirm: false
       };
 
       const { error } = await supabase.auth.signUp({
