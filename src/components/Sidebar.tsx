@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -37,6 +36,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => {
   const adminNavItems = [
     { name: "Utilisateurs", path: "/users", icon: <Users size={20} /> },
     { name: "Statistiques", path: "/analytics", icon: <BarChart3 size={20} /> },
+    { name: "Analyse Utilisateurs", path: "/user-analytics", icon: <BarChart3 size={20} /> },
   ];
 
   return (
@@ -105,10 +105,8 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => {
           </Link>
         ))}
 
-        {/* Divider before admin items */}
         {isAdmin && <div className="h-px bg-slate-100 my-2" />}
 
-        {/* Admin navigation items */}
         {isAdmin &&
           adminNavItems.map((item) => (
             <Link
@@ -126,7 +124,6 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => {
           ))}
       </div>
 
-      {/* User section at bottom */}
       <div className="border-t border-slate-100 p-3">
         <Link
           to="/settings"

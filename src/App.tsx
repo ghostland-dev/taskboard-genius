@@ -14,6 +14,7 @@ import Calendar from "./pages/Calendar";
 import Settings from "./pages/Settings";
 import Users from "./pages/Users";
 import Analytics from "./pages/Analytics";
+import UserAnalytics from "./pages/UserAnalytics";
 import NotFound from "./pages/NotFound";
 import Index from "./pages/Index";
 
@@ -37,6 +38,7 @@ const App = () => (
                 <Route path="settings" element={<Settings />} />
                 <Route path="users" element={<Users />} />
                 <Route path="analytics" element={<Analytics />} />
+                <Route path="user-analytics" element={<UserAnalytics />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
