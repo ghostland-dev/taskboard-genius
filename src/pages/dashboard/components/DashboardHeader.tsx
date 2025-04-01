@@ -2,10 +2,12 @@
 import React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Sparkles, PlusCircle } from "lucide-react"; // Added PlusCircle import
+import { Sparkles, PlusCircle, CreditCard } from "lucide-react"; // Added CreditCard import
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
 import { UserProfile } from "@/contexts/auth/types";
+import { useOneTimePayment } from "@/hooks/useOneTimePayment";
+import { toast } from "sonner";
 
 interface DashboardHeaderProps {
   user: UserProfile | null;
@@ -13,6 +15,7 @@ interface DashboardHeaderProps {
 
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ user }) => {
   const navigate = useNavigate();
+  const { initiatePayment, isLoading } = useOneTimePayment();
   
   // User welcome greeting based on time of day
   const getGreeting = () => {
@@ -24,6 +27,14 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ user }) => {
       return "Bon après-midi";
     } else {
       return "Bonsoir";
+    }
+  };
+
+  const handleOneTimePayment = async () => {
+    try {
+      await initiatePayment();
+    } catch (error) {
+      toast.error("Une erreur est survenue lors de l'initialisation du paiement");
     }
   };
 
@@ -47,6 +58,15 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ user }) => {
         
         <div className="flex items-center space-x-2 mt-4 sm:mt-0">
           <Button 
+            onClick={handleOneTimePayment}
+            className="bg-primary/90 hover:bg-primary/80"
+            disabled={isLoading}
+          >
+            <CreditCard className="mr-2 h-4 w-4" />
+            {isLoading ? "Chargement..." : "Faire un don"}
+          </Button>
+          
+          <Button 
             onClick={() => navigate("/tasks")}
             className="bg-primary hover:bg-primary/90"
           >
@@ -57,7 +77,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ user }) => {
       </div>
 
       {!user?.role && (
-        <Alert className="bg-primary/5 border-primary/20">
+        <Alert className="bg-primary/5 border-primary/20 mt-4">
           <Sparkles className="h-4 w-4 text-primary" />
           <AlertTitle>Période d'essai</AlertTitle>
           <AlertDescription className="flex justify-between items-center">
