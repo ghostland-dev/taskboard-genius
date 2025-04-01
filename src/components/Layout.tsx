@@ -27,13 +27,13 @@ const Layout: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background overflow-hidden">
       <Toaster position="top-right" />
       <Sidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
       
-      <div className="flex flex-col w-full">
+      <div className="flex flex-col flex-1">
         {/* Header */}
-        <header className="h-16 border-b flex items-center justify-between px-6">
+        <header className="h-16 border-b flex items-center justify-between px-6 transition-all duration-200">
           <div></div>
           <div className="flex items-center space-x-4">
             <DropdownMenu>
@@ -96,11 +96,13 @@ const Layout: React.FC = () => {
         {/* Main content */}
         <main 
           className={cn(
-            "flex-1 p-6 overflow-y-auto",
+            "flex-1 p-4 md:p-6 overflow-y-auto transition-all duration-200",
             sidebarCollapsed ? "ml-[70px]" : "ml-[240px]"
           )}
         >
-          <Outlet />
+          <div className="max-w-7xl mx-auto w-full animate-fade-in">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

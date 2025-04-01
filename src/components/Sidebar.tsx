@@ -11,7 +11,7 @@ import {
   Users,
   LogOut,
   BarChart3,
-  Menu,
+  ChevronLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -41,7 +41,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => {
   return (
     <div
       className={cn(
-        "h-screen bg-sidebar text-sidebar-foreground border-r border-sidebar-border transition-all duration-300 flex flex-col",
+        "h-screen bg-sidebar text-sidebar-foreground border-r border-sidebar-border transition-all duration-300 flex flex-col fixed left-0 z-30",
         collapsed ? "w-[70px]" : "w-[240px]"
       )}
     >
@@ -55,13 +55,16 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => {
           variant="ghost"
           size="icon"
           onClick={() => setCollapsed(!collapsed)}
-          className="ml-auto"
+          className={cn(
+            "transition-transform", 
+            collapsed ? "ml-auto rotate-180" : "ml-auto"
+          )}
         >
-          <Menu size={20} />
+          <ChevronLeft size={20} />
         </Button>
       </div>
 
-      <div className="flex flex-col flex-grow p-2 space-y-1 overflow-y-auto">
+      <div className="flex flex-col flex-grow p-2 space-y-1 overflow-y-auto scrollbar-thin">
         {navItems.map((item) => (
           <Link
             key={item.path}
@@ -73,7 +76,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => {
             )}
           >
             <span className="mr-2">{item.icon}</span>
-            {!collapsed && <span>{item.name}</span>}
+            {!collapsed && <span className="transition-opacity duration-200">{item.name}</span>}
           </Link>
         ))}
 
@@ -93,7 +96,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => {
               )}
             >
               <span className="mr-2">{item.icon}</span>
-              {!collapsed && <span>{item.name}</span>}
+              {!collapsed && <span className="transition-opacity duration-200">{item.name}</span>}
             </Link>
           ))}
       </div>
@@ -111,7 +114,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => {
           <span className="mr-2">
             <Settings size={20} />
           </span>
-          {!collapsed && <span>Paramètres</span>}
+          {!collapsed && <span className="transition-opacity duration-200">Paramètres</span>}
         </Link>
         <Button
           variant="ghost"
@@ -121,7 +124,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, setCollapsed }) => {
           <span className="mr-2">
             <LogOut size={20} />
           </span>
-          {!collapsed && <span>Déconnexion</span>}
+          {!collapsed && <span className="transition-opacity duration-200">Déconnexion</span>}
         </Button>
       </div>
     </div>
