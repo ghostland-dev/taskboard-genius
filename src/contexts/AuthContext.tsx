@@ -1,11 +1,11 @@
-import React, { createContext, useState, useContext, useEffect } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Session, User } from "@supabase/supabase-js";
+import { Session } from "@supabase/supabase-js";
 
-type UserProfile = {
+// Typage local de la table "profiles"
+type SupabaseProfileRow = {
   id: string;
-  email: string;
   name: string;
   role: "user" | "admin" | "superadmin";
   status: "active" | "inactive";
@@ -16,23 +16,27 @@ type UserProfile = {
   subscription_period_end?: string;
 };
 
+// Utilisateur enrichi avec email de la session
+type UserProfile = SupabaseProfileRow & {
+  email: string;
+};
+
 type AuthContextType = {
   user: UserProfile | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<{success: boolean}>;
+  login: (email: string, password: string) => Promise<{ success: boolean }>;
   signup: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   session: Session | null;
+  refreshUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const useAuth = () => {
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
+  if (!context) throw new Error("useAuth must be used within an AuthProvider");
   return context;
 };
 
@@ -41,103 +45,93 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const loadUserProfile = async (userId: string) => {
+  const loadUserProfile = async (userId: string): Promise<UserProfile | null> => {
     try {
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", userId)
-        .single();
+        .single<SupabaseProfileRow>();
 
       if (error) {
-        console.error("Error loading user profile:", error);
+        console.error("Erreur chargement profil:", error);
         return null;
       }
 
-      if (data) {
-        return {
-          id: data.id,
-          email: session?.user.email || "",
-          name: data.name,
-          role: data.role as UserProfile["role"],
-          status: data.status as "active" | "inactive",
-          subscription: data.subscription,
-          stripe_customer_id: data.stripe_customer_id,
-          subscription_id: data.subscription_id,
-          subscription_status: data.subscription_status,
-          subscription_period_end: data.subscription_period_end
-        };
+      if (!session?.user?.email) {
+        console.warn("Email manquant dans la session");
+        return null;
       }
+
+      return {
+        ...data,
+        email: session.user.email,
+      };
     } catch (error) {
-      console.error("Error in loadUserProfile:", error);
+      console.error("Erreur loadUserProfile:", error);
+      return null;
     }
-    return null;
+  };
+
+  const refreshUser = async () => {
+    if (session?.user) {
+      const profile = await loadUserProfile(session.user.id);
+      setUser(profile);
+    }
   };
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
-        console.log("Auth state changed:", event);
-        setSession(currentSession);
-
-        if (currentSession?.user) {
-          setTimeout(async () => {
-            const profile = await loadUserProfile(currentSession.user.id);
-            setUser(profile);
-            setLoading(false);
-          }, 0);
-        } else {
-          setUser(null);
-          setLoading(false);
-        }
+    const authListener = supabase.auth.onAuthStateChange(async (_event, currentSession) => {
+      setSession(currentSession);
+      if (currentSession?.user) {
+        const profile = await loadUserProfile(currentSession.user.id);
+        setUser(profile);
+      } else {
+        setUser(null);
       }
-    );
+      setLoading(false);
+    }).data.subscription;
 
     supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
-      console.log("Initial session check:", currentSession ? "Found session" : "No session");
       setSession(currentSession);
-
       if (currentSession?.user) {
         const profile = await loadUserProfile(currentSession.user.id);
         setUser(profile);
       }
-      
       setLoading(false);
     });
 
     return () => {
-      subscription.unsubscribe();
+      authListener?.unsubscribe();
     };
   }, []);
 
-  const login = async (email: string, password: string): Promise<{success: boolean}> => {
+  const login = async (email: string, password: string): Promise<{ success: boolean }> => {
     try {
       setLoading(true);
-      
       const sanitizedEmail = email.trim().toLowerCase();
-      
+
       if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(sanitizedEmail)) {
         toast.error("Format d'email invalide");
-        return {success: false};
+        return { success: false };
       }
-      
-      const { error } = await supabase.auth.signInWithPassword({ 
-        email: sanitizedEmail, 
-        password 
+
+      const { error } = await supabase.auth.signInWithPassword({
+        email: sanitizedEmail,
+        password,
       });
-      
+
       if (error) {
         toast.error("Identifiants invalides");
-        console.error("Login error:", error);
-        return {success: false};
-      } else {
-        toast.success("Connexion réussie");
-        return {success: true};
+        return { success: false };
       }
+
+      toast.success("Connexion réussie");
+      return { success: true };
     } catch (error) {
-      toast.error("Une erreur est survenue lors de la connexion");
+      toast.error("Erreur lors de la connexion");
       console.error(error);
-      return {success: false};
+      return { success: false };
     } finally {
       setLoading(false);
     }
@@ -146,52 +140,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signup = async (email: string, password: string, name: string) => {
     try {
       setLoading(true);
-      
       const sanitizedEmail = email.trim().toLowerCase();
       const sanitizedName = name.trim();
-      
+
       if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(sanitizedEmail)) {
         toast.error("Format d'email invalide");
         return;
       }
-      
+
       if (sanitizedName.length < 2) {
         toast.error("Le nom doit contenir au moins 2 caractères");
         return;
       }
-      
+
       if (password.length < 8) {
-        toast.error("Le mot de passe doit contenir au moins 8 caractères");
+        toast.error("Mot de passe trop court");
         return;
       }
-      
+
       const options = {
         data: { name: sanitizedName },
-        emailRedirect: window.location.origin + "/login"
+        emailRedirectTo: `${window.location.origin}/login`,
       };
-      
-      console.log("Starting signup with email:", sanitizedEmail);
-      console.log("Redirect URL:", options.emailRedirect);
-      
-      const { data, error } = await supabase.auth.signUp({ 
-        email: sanitizedEmail, 
+
+      const { error } = await supabase.auth.signUp({
+        email: sanitizedEmail,
         password,
-        options
+        options,
       });
-      
+
       if (error) {
         if (error.message.includes("already registered")) {
-          toast.error("Cet email est déjà utilisé");
+          toast.error("Email déjà utilisé");
         } else {
-          toast.error("Une erreur est survenue lors de l'inscription");
+          toast.error("Erreur lors de l'inscription");
           console.error("Signup error:", error);
         }
       } else {
-        console.log("Signup response:", data);
-        toast.success("Compte créé avec succès. Vérifiez votre email pour confirmer.");
+        toast.success("Compte créé. Vérifiez votre email.");
       }
     } catch (error) {
-      toast.error("Une erreur est survenue lors de l'inscription");
+      toast.error("Erreur lors de l'inscription");
       console.error(error);
     } finally {
       setLoading(false);
@@ -200,22 +189,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
+      setLoading(true);
       await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
       toast.info("Déconnexion réussie");
     } catch (error) {
-      toast.error("Une erreur est survenue lors de la déconnexion");
+      toast.error("Erreur lors de la déconnexion");
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const value = {
+  const value: AuthContextType = {
     user,
     loading,
     login,
     signup,
     logout,
     isAuthenticated: !!user,
-    session
+    session,
+    refreshUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
