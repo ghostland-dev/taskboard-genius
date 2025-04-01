@@ -1,13 +1,20 @@
 
-import { SubscriptionPlan } from "@/hooks/useSubscription";
-
-export type User = {
+export interface User {
   id: string;
-  name: string | null;
-  email?: string; // Make email optional since it might not be in the profiles table
-  role: string;
-  subscription?: SubscriptionPlan;
+  email?: string;
+  name?: string;
+  role?: 'user' | 'admin' | 'superadmin';
+  subscription?: 'trial' | 'standard' | 'premium' | 'expired';
+  status?: 'active' | 'inactive' | 'suspended';
   created_at?: string;
-  status?: string;
   updated_at?: string;
-};
+}
+
+export interface UserStats {
+  totalUsers: number;
+  activeUsers: number;
+  premiumUsers: number;
+  standardUsers: number;
+  trialUsers: number;
+  newUsersThisMonth: number;
+}

@@ -1,333 +1,257 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useTasks, Task } from "@/contexts/TaskContext";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { toast } from "sonner";
-import { Download } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertTriangle, Users, TrendingUp, PieChart } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useSubscription } from "@/hooks/useSubscription";
+import UserGrowthChart from "@/components/analytics/UserGrowthChart";
+import SubscriptionDistribution from "@/components/analytics/SubscriptionDistribution";
+import UserActivityChart from "@/components/analytics/UserActivityChart";
+import UserStatusChart from "@/components/analytics/UserStatusChart";
 
-const Settings: React.FC = () => {
+const Analytics: React.FC = () => {
   const { user } = useAuth();
-  const { tasks } = useTasks();
+  const navigate = useNavigate();
+  const { getAllSubscriptions } = useSubscription();
+  const [timeRange, setTimeRange] = useState<string>("30");
+  const [isLoading, setIsLoading] = useState(true);
+  const [analyticsData, setAnalyticsData] = useState({
+    totalUsers: 0,
+    activeUsers: 0,
+    premiumUsers: 0,
+    standardUsers: 0,
+    trialUsers: 0,
+    newUsersThisMonth: 0
+  });
 
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [smsNotifications, setSmsNotifications] = useState(false);
-  const [pushNotifications, setPushNotifications] = useState(true);
-  const [exportFormat, setExportFormat] = useState("pdf");
+  useEffect(() => {
+    const fetchAnalyticsData = async () => {
+      setIsLoading(true);
+      try {
+        // Fetch from Supabase
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("*");
+          
+        if (profiles) {
+          const currentDate = new Date();
+          const thirtyDaysAgo = new Date(currentDate);
+          thirtyDaysAgo.setDate(currentDate.getDate() - 30);
+          
+          const active = profiles.filter(p => p.status === "active").length;
+          const premium = profiles.filter(p => p.subscription === "premium").length;
+          const standard = profiles.filter(p => p.subscription === "standard").length;
+          const trial = profiles.filter(p => p.subscription === "trial").length;
+          const newUsers = profiles.filter(p => {
+            const createdAt = new Date(p.created_at);
+            return createdAt >= thirtyDaysAgo;
+          }).length;
+          
+          setAnalyticsData({
+            totalUsers: profiles.length,
+            activeUsers: active,
+            premiumUsers: premium,
+            standardUsers: standard,
+            trialUsers: trial,
+            newUsersThisMonth: newUsers
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching analytics data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const handleExportData = () => {
-    // In a real app, this would generate and download the file
-    // For this demo, we'll just show a toast message
-    toast.success(`Données exportées en format ${exportFormat.toUpperCase()} !`, {
-      description: "Le fichier a été téléchargé avec succès."
-    });
+    fetchAnalyticsData();
+  }, []);
 
-    // For demonstration, let's convert tasks to JSON
-    const jsonData = JSON.stringify(tasks, null, 2);
-    console.log("Exported data:", jsonData);
-  };
-
-  const saveNotificationSettings = () => {
-    toast.success("Paramètres de notification enregistrés !", {
-      description: "Vos préférences ont été mises à jour."
-    });
-  };
+  // If the user is not admin, redirect or show an access denied message
+  if (user?.role !== "superadmin" && user?.role !== "admin") {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Alert className="max-w-lg">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Accès non autorisé</AlertTitle>
+          <AlertDescription>
+            Vous n'avez pas les permissions nécessaires pour accéder à cette page. 
+            Cette section est réservée aux administrateurs.
+          </AlertDescription>
+          <Button 
+            className="mt-4" 
+            variant="outline" 
+            onClick={() => navigate("/dashboard")}
+          >
+            Retour au tableau de bord
+          </Button>
+        </Alert>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold gradient-heading">Paramètres</h1>
-        <p className="text-muted-foreground mt-1">Gérez vos préférences et votre compte</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold gradient-heading">Analyse des utilisateurs</h1>
+          <p className="text-muted-foreground mt-1">
+            Statistiques et tendances des utilisateurs de la plateforme
+          </p>
+        </div>
+        <Select
+          value={timeRange}
+          onValueChange={setTimeRange}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Période" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="7">7 derniers jours</SelectItem>
+            <SelectItem value="30">30 derniers jours</SelectItem>
+            <SelectItem value="90">90 derniers jours</SelectItem>
+            <SelectItem value="365">Dernière année</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      <Tabs defaultValue="account" className="w-full">
+      {/* KPI Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-muted-foreground text-sm">Total des utilisateurs</p>
+                <p className="text-3xl font-bold">{analyticsData.totalUsers}</p>
+              </div>
+              <div className="bg-blue-100 p-3 rounded-full">
+                <Users className="text-blue-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-muted-foreground text-sm">Utilisateurs actifs</p>
+                <p className="text-3xl font-bold">{analyticsData.activeUsers}</p>
+              </div>
+              <div className="bg-green-100 p-3 rounded-full">
+                <TrendingUp className="text-green-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-muted-foreground text-sm">Utilisateurs premium</p>
+                <p className="text-3xl font-bold">{analyticsData.premiumUsers}</p>
+              </div>
+              <div className="bg-purple-100 p-3 rounded-full">
+                <PieChart className="text-purple-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-muted-foreground text-sm">Nouveaux utilisateurs</p>
+                <p className="text-3xl font-bold">{analyticsData.newUsersThisMonth}</p>
+              </div>
+              <div className="bg-amber-100 p-3 rounded-full">
+                <Users className="text-amber-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Tabs defaultValue="growth" className="w-full">
         <TabsList>
-          <TabsTrigger value="account">Compte</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="export">Exportation</TabsTrigger>
-          <TabsTrigger value="subscription">Abonnement</TabsTrigger>
+          <TabsTrigger value="growth">Croissance</TabsTrigger>
+          <TabsTrigger value="subscriptions">Abonnements</TabsTrigger>
+          <TabsTrigger value="activity">Activité</TabsTrigger>
+          <TabsTrigger value="status">Statut</TabsTrigger>
         </TabsList>
 
-        {/* Account Settings */}
-        <TabsContent value="account">
+        <TabsContent value="growth">
           <Card>
             <CardHeader>
-              <CardTitle>Information du compte</CardTitle>
+              <CardTitle>Croissance des utilisateurs</CardTitle>
               <CardDescription>
-                Gérez vos informations personnelles
+                Nouveaux utilisateurs sur la période sélectionnée
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Nom</Label>
-                <Input
-                  id="name"
-                  defaultValue={user?.name || ""}
-                  readOnly={user?.role === "superadmin"}
-                />
+            <CardContent>
+              <div className="h-80">
+                <UserGrowthChart timeRange={parseInt(timeRange)} />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  defaultValue={user?.email || ""}
-                  readOnly={user?.role === "superadmin"}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="role">Rôle</Label>
-                <Input
-                  id="role"
-                  defaultValue={
-                    user?.role === "superadmin"
-                      ? "Super Admin"
-                      : user?.role === "admin"
-                      ? "Administrateur"
-                      : "Utilisateur"
-                  }
-                  readOnly
-                />
-              </div>
-
-              <Button className="bg-brand-500 hover:bg-brand-600 mt-4">
-                Sauvegarder les changements
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>Sécurité</CardTitle>
-              <CardDescription>
-                Mettez à jour votre mot de passe
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="current-password">Mot de passe actuel</Label>
-                <Input id="current-password" type="password" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="new-password">Nouveau mot de passe</Label>
-                <Input id="new-password" type="password" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirm-password">Confirmer le mot de passe</Label>
-                <Input id="confirm-password" type="password" />
-              </div>
-
-              <Button className="bg-brand-500 hover:bg-brand-600 mt-4">
-                Mettre à jour le mot de passe
-              </Button>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Notification Settings */}
-        <TabsContent value="notifications">
+        <TabsContent value="subscriptions">
           <Card>
             <CardHeader>
-              <CardTitle>Préférences de notification</CardTitle>
+              <CardTitle>Distribution des abonnements</CardTitle>
               <CardDescription>
-                Configurez comment vous souhaitez être notifié
+                Répartition des utilisateurs par type d'abonnement
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Notifications par email</p>
-                  <p className="text-sm text-muted-foreground">
-                    Recevez des alertes de tâches par email
-                  </p>
-                </div>
-                <Switch
-                  checked={emailNotifications}
-                  onCheckedChange={setEmailNotifications}
+            <CardContent>
+              <div className="h-80">
+                <SubscriptionDistribution 
+                  data={[
+                    { name: 'Premium', value: analyticsData.premiumUsers },
+                    { name: 'Standard', value: analyticsData.standardUsers },
+                    { name: 'Essai', value: analyticsData.trialUsers }
+                  ]} 
                 />
               </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Notifications SMS</p>
-                  <p className="text-sm text-muted-foreground">
-                    Recevez des alertes de tâches par SMS
-                  </p>
-                </div>
-                <Switch 
-                  checked={smsNotifications} 
-                  onCheckedChange={setSmsNotifications} 
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Notifications push</p>
-                  <p className="text-sm text-muted-foreground">
-                    Recevez des alertes dans l'application
-                  </p>
-                </div>
-                <Switch 
-                  checked={pushNotifications} 
-                  onCheckedChange={setPushNotifications} 
-                />
-              </div>
-
-              <Button onClick={saveNotificationSettings} className="bg-brand-500 hover:bg-brand-600 mt-4">
-                Sauvegarder les préférences
-              </Button>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Export Settings */}
-        <TabsContent value="export">
+        <TabsContent value="activity">
           <Card>
             <CardHeader>
-              <CardTitle>Exporter vos données</CardTitle>
+              <CardTitle>Activité des utilisateurs</CardTitle>
               <CardDescription>
-                Téléchargez vos tâches et informations dans différents formats
+                Nombre de connexions et d'actions par jour
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="export-format">Format d'exportation</Label>
-                <Select
-                  value={exportFormat}
-                  onValueChange={setExportFormat}
-                >
-                  <SelectTrigger id="export-format">
-                    <SelectValue placeholder="Sélectionnez un format" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pdf">PDF</SelectItem>
-                    <SelectItem value="csv">CSV</SelectItem>
-                  </SelectContent>
-                </Select>
+            <CardContent>
+              <div className="h-80">
+                <UserActivityChart timeRange={parseInt(timeRange)} />
               </div>
-
-              <div className="space-y-2">
-                <Label>Options d'exportation</Label>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="include-completed"
-                      className="rounded border-gray-300"
-                      defaultChecked
-                    />
-                    <Label htmlFor="include-completed">Inclure les tâches terminées</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="include-details"
-                      className="rounded border-gray-300"
-                      defaultChecked
-                    />
-                    <Label htmlFor="include-details">Inclure les détails des tâches</Label>
-                  </div>
-                </div>
-              </div>
-
-              <Button onClick={handleExportData} className="mt-4">
-                <Download size={16} className="mr-2" />
-                Exporter {tasks.length} tâches
-              </Button>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Subscription Settings */}
-        <TabsContent value="subscription">
+        <TabsContent value="status">
           <Card>
             <CardHeader>
-              <CardTitle>Votre abonnement</CardTitle>
+              <CardTitle>Statut des utilisateurs</CardTitle>
               <CardDescription>
-                Gérez votre forfait et vos options
+                Répartition des utilisateurs par statut
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="bg-brand-100 p-4 rounded-lg">
-                <p className="font-medium">Forfait actuel: <span className="text-brand-600">Période d'essai</span></p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Il vous reste 10 jours d'essai. Passez à un forfait payant pour débloquer toutes les fonctionnalités.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                <Card className="border-2 border-brand-500">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-brand-600">Forfait Standard</CardTitle>
-                    <CardDescription>
-                      <span className="text-2xl font-bold">9,99€/mois</span>
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-2 mb-6">
-                      <li className="flex items-center">
-                        <span className="text-green-500 mr-2">✓</span>
-                        Jusqu'à 500 tâches
-                      </li>
-                      <li className="flex items-center">
-                        <span className="text-green-500 mr-2">✓</span>
-                        Notifications par email
-                      </li>
-                      <li className="flex items-center">
-                        <span className="text-green-500 mr-2">✓</span>
-                        Exportation PDF
-                      </li>
-                    </ul>
-                    <Button className="w-full">S'abonner</Button>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle>Forfait Premium</CardTitle>
-                    <CardDescription>
-                      <span className="text-2xl font-bold">19,99€/mois</span>
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-2 mb-6">
-                      <li className="flex items-center">
-                        <span className="text-green-500 mr-2">✓</span>
-                        Tâches illimitées
-                      </li>
-                      <li className="flex items-center">
-                        <span className="text-green-500 mr-2">✓</span>
-                        Notifications email + SMS
-                      </li>
-                      <li className="flex items-center">
-                        <span className="text-green-500 mr-2">✓</span>
-                        Exports PDF et CSV
-                      </li>
-                      <li className="flex items-center">
-                        <span className="text-green-500 mr-2">✓</span>
-                        Support prioritaire
-                      </li>
-                    </ul>
-                    <Button variant="outline" className="w-full">S'abonner</Button>
-                  </CardContent>
-                </Card>
+            <CardContent>
+              <div className="h-80">
+                <UserStatusChart />
               </div>
             </CardContent>
           </Card>
@@ -337,4 +261,4 @@ const Settings: React.FC = () => {
   );
 };
 
-export default Settings;
+export default Analytics;
