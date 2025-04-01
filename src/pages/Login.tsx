@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Navigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,13 +21,11 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-// Schéma de validation pour le formulaire de connexion
 const loginSchema = z.object({
   email: z.string().email("Format d'email invalide").min(1, "L'email est requis"),
   password: z.string().min(1, "Le mot de passe est requis"),
 });
 
-// Schéma de validation pour le formulaire d'inscription
 const registerSchema = z.object({
   name: z.string().min(2, "Le nom doit contenir au moins 2 caractères").max(50, "Le nom est trop long"),
   email: z.string().email("Format d'email invalide").min(1, "L'email est requis"),
@@ -40,7 +37,6 @@ const registerSchema = z.object({
     .regex(/[0-9]/, "Le mot de passe doit contenir au moins un chiffre")
     .regex(/[^A-Za-z0-9]/, "Le mot de passe doit contenir au moins un caractère spécial"),
   confirmPassword: z.string().min(1, "Veuillez confirmer votre mot de passe"),
-  isSuperAdmin: z.boolean().default(false),
   termsAccepted: z.boolean().refine(val => val === true, {
     message: "Vous devez accepter les conditions d'utilisation",
   }),
@@ -57,7 +53,6 @@ const Login: React.FC = () => {
   
   const { login, signup, isAuthenticated, loading } = useAuth();
 
-  // Formulaire de connexion
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -66,7 +61,6 @@ const Login: React.FC = () => {
     },
   });
 
-  // Formulaire d'inscription
   const registerForm = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -74,12 +68,10 @@ const Login: React.FC = () => {
       email: "",
       password: "",
       confirmPassword: "",
-      isSuperAdmin: false,
       termsAccepted: false,
     },
   });
 
-  // Vérifier si l'utilisateur est bloqué
   useEffect(() => {
     const storedLockout = localStorage.getItem('lockoutUntil');
     if (storedLockout) {
@@ -98,7 +90,6 @@ const Login: React.FC = () => {
     }
   }, []);
 
-  // Vérification du verrouillage
   const checkLockout = () => {
     if (lockoutUntil && lockoutUntil > new Date()) {
       const remainingTime = Math.ceil((lockoutUntil.getTime() - new Date().getTime()) / 60000);
@@ -108,13 +99,11 @@ const Login: React.FC = () => {
     return false;
   };
 
-  // Gestion des tentatives échouées
   const handleFailedAttempt = () => {
     const newAttemptCount = attemptCount + 1;
     setAttemptCount(newAttemptCount);
     localStorage.setItem('loginAttempts', newAttemptCount.toString());
     
-    // Après 5 tentatives, verrouiller pendant 15 minutes
     if (newAttemptCount >= 5) {
       const lockoutTime = new Date(new Date().getTime() + 15 * 60000);
       setLockoutUntil(lockoutTime);
@@ -123,7 +112,6 @@ const Login: React.FC = () => {
     }
   };
 
-  // Gestion de la connexion
   const handleLoginSubmit = async (values: z.infer<typeof loginSchema>) => {
     if (checkLockout()) return;
     
@@ -132,7 +120,6 @@ const Login: React.FC = () => {
       if (!result.success) {
         handleFailedAttempt();
       } else {
-        // Réinitialiser le compteur en cas de succès
         setAttemptCount(0);
         localStorage.removeItem('loginAttempts');
       }
@@ -141,9 +128,8 @@ const Login: React.FC = () => {
     }
   };
 
-  // Gestion de l'inscription
   const handleRegisterSubmit = async (values: z.infer<typeof registerSchema>) => {    
-    await signup(values.email, values.password, values.name, values.isSuperAdmin);
+    await signup(values.email, values.password, values.name);
   };
 
   if (isAuthenticated) {
@@ -152,7 +138,6 @@ const Login: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
-      {/* Left side - Hero image and text (on medium+ screens) */}
       <div className="hidden md:flex md:w-1/2 hero-gradient items-center justify-center p-8">
         <div className="max-w-md text-white space-y-6">
           <div className="flex items-center space-x-3 mb-8">
@@ -181,7 +166,6 @@ const Login: React.FC = () => {
         </div>
       </div>
       
-      {/* Right side - Login/Register form */}
       <div className="flex flex-col items-center justify-center p-6 md:p-8 flex-1 md:w-1/2 bg-slate-50">
         <div className="w-full max-w-md">
           <div className="md:hidden text-center mb-8">
@@ -421,34 +405,6 @@ const Login: React.FC = () => {
                                 J'accepte les <Link to="/terms" className="text-primary hover:underline">conditions d'utilisation</Link> et la <Link to="/privacy" className="text-primary hover:underline">politique de confidentialité</Link>
                               </FormLabel>
                               <FormMessage />
-                            </div>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={registerForm.control}
-                        name="isSuperAdmin"
-                        render={({ field }) => (
-                          <FormItem className="flex items-center space-x-2">
-                            <FormControl>
-                              <Checkbox 
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                                id="super-admin" 
-                              />
-                            </FormControl>
-                            <div className="grid gap-1.5 leading-none">
-                              <FormLabel
-                                htmlFor="super-admin"
-                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center space-x-1"
-                              >
-                                <Shield className="h-4 w-4 text-primary" />
-                                <span>Créer un compte Super Admin</span>
-                              </FormLabel>
-                              <p className="text-xs text-muted-foreground">
-                                Les Super Admins sont créés sans vérification d'email requise
-                              </p>
                             </div>
                           </FormItem>
                         )}

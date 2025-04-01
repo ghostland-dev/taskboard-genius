@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,7 +20,7 @@ type AuthContextType = {
   user: UserProfile | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<{success: boolean}>;
-  signup: (email: string, password: string, name: string, isSuperAdmin?: boolean) => Promise<void>;
+  signup: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   session: Session | null;
@@ -42,10 +41,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Load user profile data from Supabase
   const loadUserProfile = async (userId: string) => {
     try {
-      // Type assertion to tell TypeScript to trust that "profiles" exists
       const { data, error } = await (supabase
         .from("profiles") as any)
         .select("*")
@@ -78,7 +75,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
         setSession(currentSession);
@@ -94,7 +90,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // Check current session
     supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
       setSession(currentSession);
 
@@ -115,10 +110,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       
-      // Sanitize input
       const sanitizedEmail = email.trim().toLowerCase();
       
-      // Valider l'email côté serveur
       if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(sanitizedEmail)) {
         toast.error("Format d'email invalide");
         return {success: false};
@@ -130,7 +123,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       if (error) {
-        // Ne pas donner d'informations spécifiques sur l'erreur
         toast.error("Identifiants invalides");
         console.error("Login error:", error);
         return {success: false};
@@ -147,15 +139,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signup = async (email: string, password: string, name: string, isSuperAdmin = false) => {
+  const signup = async (email: string, password: string, name: string) => {
     try {
       setLoading(true);
       
-      // Sanitize inputs
       const sanitizedEmail = email.trim().toLowerCase();
       const sanitizedName = name.trim();
       
-      // Validation supplémentaire côté serveur
       if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(sanitizedEmail)) {
         toast.error("Format d'email invalide");
         return;
@@ -171,10 +161,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
       
-      // For super admins, we'll use emailRedirect: false to avoid email verification
       const options = {
         data: { name: sanitizedName },
-        emailRedirect: isSuperAdmin ? undefined : `${window.location.origin}/login`
+        emailRedirect: `${window.location.origin}/login`
       };
       
       const { error } = await supabase.auth.signUp({ 
@@ -184,7 +173,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       if (error) {
-        // Message d'erreur générique pour ne pas révéler d'informations sensibles
         if (error.message.includes("already registered")) {
           toast.error("Cet email est déjà utilisé");
         } else {
@@ -192,25 +180,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.error("Signup error:", error);
         }
       } else {
-        if (isSuperAdmin) {
-          // For super admins, automatically create a profile with superadmin role
-          const { data: { user: newUser } } = await supabase.auth.getUser();
-          
-          if (newUser) {
-            // Create profile for superadmin
-            await (supabase.from("profiles") as any).insert({
-              id: newUser.id,
-              name: sanitizedName,
-              role: "superadmin",
-              status: "active",
-              subscription: "premium"
-            });
-            
-            toast.success("Compte superadmin créé avec succès. Vous pouvez vous connecter immédiatement.");
-          }
-        } else {
-          toast.success("Compte créé avec succès. Vérifiez votre email pour confirmer.");
-        }
+        toast.success("Compte créé avec succès. Vérifiez votre email pour confirmer.");
       }
     } catch (error) {
       toast.error("Une erreur est survenue lors de l'inscription");
