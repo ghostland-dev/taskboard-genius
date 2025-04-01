@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Navigate, Outlet } from "react-router-dom";
 import { Toaster } from "sonner";
 import { cn } from "@/lib/utils";
-import { Bell, Search, Settings, LogOut } from "lucide-react";
+import { Bell, Search, Settings, LogOut, Menu } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const Layout: React.FC = () => {
   const { isAuthenticated, user, logout } = useAuth();
@@ -30,12 +31,29 @@ const Layout: React.FC = () => {
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       <Toaster position="top-right" />
-      <Sidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
+      
+      {/* Desktop Sidebar */}
+      <div className="hidden md:block">
+        <Sidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
+      </div>
+      
+      {/* Mobile Sidebar */}
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button variant="ghost" size="icon" className="md:hidden absolute top-3 left-3 z-50">
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Toggle menu</span>
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="p-0 w-[280px]">
+          <Sidebar collapsed={false} setCollapsed={() => {}} />
+        </SheetContent>
+      </Sheet>
       
       <div className="flex flex-col flex-1">
         {/* Header */}
         <header className="h-16 border-b flex items-center justify-between px-6 bg-white shadow-sm z-10 transition-all duration-200">
-          <div className="flex-1 max-w-md">
+          <div className="flex-1 max-w-md md:ml-0 ml-10">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input 
@@ -119,7 +137,8 @@ const Layout: React.FC = () => {
         <main 
           className={cn(
             "flex-1 p-4 md:p-6 overflow-y-auto transition-all duration-200 bg-slate-50",
-            sidebarCollapsed ? "ml-[70px]" : "ml-[240px]"
+            sidebarCollapsed ? "md:ml-[70px]" : "md:ml-[240px]",
+            "ml-0" // Default margin for mobile
           )}
         >
           <div className="max-w-7xl mx-auto w-full animate-fade-in">
