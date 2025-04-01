@@ -2,12 +2,14 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { TrendingUp, Users, UserCheck, Clock } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface UserAnalyticsCardsProps {
   data: any;  // Type à définir selon la structure des données
+  isLoading?: boolean;
 }
 
-const UserAnalyticsCards: React.FC<UserAnalyticsCardsProps> = ({ data }) => {
+const UserAnalyticsCards: React.FC<UserAnalyticsCardsProps> = ({ data, isLoading = false }) => {
   // Valeurs fictives pour la démo
   const stats = {
     totalUsers: data?.totalUsers || 128,
@@ -15,6 +17,20 @@ const UserAnalyticsCards: React.FC<UserAnalyticsCardsProps> = ({ data }) => {
     retentionRate: data?.retentionRate || "76%",
     avgSessionTime: data?.avgSessionTime || "24 min"
   };
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[...Array(4)].map((_, i) => (
+          <Card key={i}>
+            <CardContent className="pt-6">
+              <Skeleton className="h-20 w-full" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

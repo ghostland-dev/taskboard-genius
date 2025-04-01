@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
-import { format, subDays } from "date-fns";
+
+import React from "react";
+import { format } from "date-fns";
 import { 
   LineChart, 
   Line, 
@@ -9,92 +8,22 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer,
   Legend 
 } from "recharts";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { ChartContainer } from "@/components/ui/chart";
 
-interface UserGrowthChartProps {
-  timeRange: number; // Number of days to look back
+interface GrowthDataPoint {
+  date: string;
+  cumulative: number;
+  newUsers: number;
 }
 
-const UserGrowthChart: React.FC<UserGrowthChartProps> = ({ timeRange }) => {
-  const [data, setData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+interface UserGrowthChartProps {
+  data: GrowthDataPoint[];
+}
 
-  useEffect(() => {
-    const fetchUserGrowthData = async () => {
-      setLoading(true);
-      try {
-        // In a real app, this would be a more sophisticated query 
-        // that groups by date to show daily growth
-        const { data: profiles } = await supabase
-          .from("profiles")
-          .select("created_at")
-          .order("created_at", { ascending: true });
-
-        if (profiles && profiles.length > 0) {
-          // Generate date points for the last N days
-          const endDate = new Date();
-          const startDate = subDays(endDate, timeRange);
-          
-          // Initialize array with one entry per day in the time range
-          const dailyData: Record<string, any>[] = [];
-          let currentDate = new Date(startDate);
-          
-          // Create entry for each day with initial count of 0
-          while (currentDate <= endDate) {
-            const dateStr = format(currentDate, "yyyy-MM-dd");
-            dailyData.push({
-              date: dateStr,
-              users: 0,
-              newUsers: 0,
-              cumulative: 0
-            });
-            currentDate.setDate(currentDate.getDate() + 1);
-          }
-          
-          // Count users created each day
-          profiles.forEach(profile => {
-            const createdDate = format(new Date(profile.created_at), "yyyy-MM-dd");
-            const existingEntry = dailyData.find(entry => entry.date === createdDate);
-            
-            if (existingEntry) {
-              existingEntry.newUsers += 1;
-            }
-          });
-          
-          // Calculate cumulative growth
-          let cumulativeCount = 0;
-          dailyData.forEach((day, index) => {
-            cumulativeCount += day.newUsers;
-            day.cumulative = cumulativeCount;
-            // For better visualization, keep track of both new and total
-            day.users = cumulativeCount;
-          });
-          
-          setData(dailyData);
-        }
-      } catch (error) {
-        console.error("Error fetching user growth data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserGrowthData();
-  }, [timeRange]);
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
-        <p className="ml-2">Chargement des données...</p>
-      </div>
-    );
-  }
-
-  if (!data.length) {
+const UserGrowthChart: React.FC<UserGrowthChartProps> = ({ data }) => {
+  if (!data || data.length === 0) {
     return <div className="text-center p-8">Aucune donnée disponible pour cette période.</div>;
   }
 

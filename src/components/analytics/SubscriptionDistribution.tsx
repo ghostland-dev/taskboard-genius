@@ -1,16 +1,16 @@
 
 import React from "react";
-import { Loader2 } from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
+import { ChartContainer } from "@/components/ui/chart";
 
-interface SubscriptionData {
+interface SubscriptionDataPoint {
   name: string;
   value: number;
+  percentage?: number;
 }
 
 interface SubscriptionDistributionProps {
-  data: SubscriptionData[];
+  data: SubscriptionDataPoint[];
 }
 
 const SubscriptionDistribution: React.FC<SubscriptionDistributionProps> = ({ data }) => {
