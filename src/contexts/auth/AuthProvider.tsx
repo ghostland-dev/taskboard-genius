@@ -1,63 +1,11 @@
 
-import React, { createContext, useState, useContext, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Session, User } from "@supabase/supabase-js";
-
-type UserProfile = {
-  id: string;
-  email: string;
-  name: string;
-  role: "user" | "admin" | "superadmin";
-  status: "active" | "inactive";
-  subscription: string;
-  stripe_customer_id?: string;
-};
-
-// Default users for testing
-const TEST_USERS = [
-  {
-    id: "1",
-    email: "admin@exemple.com",
-    password: "admin123",
-    name: "Admin Test",
-    role: "admin",
-    status: "active",
-    subscription: "premium",
-    stripe_customer_id: "cus_test_1"
-  },
-  {
-    id: "2",
-    email: "user@exemple.com",
-    password: "user123",
-    name: "User Test",
-    role: "user",
-    status: "active",
-    subscription: "trial",
-    stripe_customer_id: "cus_test_2"
-  }
-];
-
-type AuthContextType = {
-  user: UserProfile | null;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, name: string) => Promise<void>;
-  logout: () => Promise<void>;
-  isAuthenticated: boolean;
-  session: Session | null;
-  updateUserSubscription: (subscription: string) => Promise<void>;
-};
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
-};
+import { Session } from "@supabase/supabase-js";
+import { AuthContext } from "./AuthContext";
+import { UserProfile, TEST_USERS } from "./types";
+import { handleSubscriptionParams, loadUserProfile } from "./authUtils";
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -67,24 +15,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Check for URL parameters
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
-    const subscriptionStatus = queryParams.get('subscription');
     
-    if (subscriptionStatus === 'success' && user) {
-      toast.success("Abonnement souscrit avec succès!");
-      
-      // In a real implementation, you would check with Stripe 
-      // For now, we'll just update the user's subscription for the demo
-      if (user.email === "user@exemple.com") {
-        updateUserSubscription("standard").then(() => {
-          // Remove query params from URL
-          window.history.replaceState({}, document.title, window.location.pathname);
-        });
+    if (user) {
+      const handled = handleSubscriptionParams(queryParams, user, updateUserSubscription);
+      if (handled) {
+        toast.success("Abonnement souscrit avec succès!");
       }
-    } else if (subscriptionStatus === 'canceled') {
-      toast.info("Abonnement annulé");
-      
-      // Remove query params from URL
-      window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, [user, window.location.search]);
 
@@ -105,38 +41,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
     }
   }, []);
-
-  // Load user profile data from Supabase
-  const loadUserProfile = async (userId: string) => {
-    try {
-      // Type assertion to tell TypeScript to trust that "profiles" exists
-      const { data, error } = await (supabase
-        .from("profiles") as any)
-        .select("*")
-        .eq("id", userId)
-        .single();
-
-      if (error) {
-        console.error("Error loading user profile:", error);
-        return null;
-      }
-
-      if (data) {
-        return {
-          id: data.id,
-          email: session?.user.email || "",
-          name: data.name,
-          role: data.role as UserProfile["role"],
-          status: data.status as "active" | "inactive",
-          subscription: data.subscription,
-          stripe_customer_id: data.stripe_customer_id
-        };
-      }
-    } catch (error) {
-      console.error("Error in loadUserProfile:", error);
-    }
-    return null;
-  };
 
   const login = async (email: string, password: string) => {
     try {
