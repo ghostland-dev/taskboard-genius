@@ -13,6 +13,28 @@ type UserProfile = {
   subscription: string;
 };
 
+// Default users for testing
+const TEST_USERS = [
+  {
+    id: "1",
+    email: "admin@exemple.com",
+    password: "admin123",
+    name: "Admin Test",
+    role: "admin",
+    status: "active",
+    subscription: "premium"
+  },
+  {
+    id: "2",
+    email: "user@exemple.com",
+    password: "user123",
+    name: "User Test",
+    role: "user",
+    status: "active",
+    subscription: "trial"
+  }
+];
+
 type AuthContextType = {
   user: UserProfile | null;
   loading: boolean;
@@ -37,6 +59,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<UserProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+
+  // Check for test user in local storage on initial load
+  useEffect(() => {
+    const storedUser = localStorage.getItem("testUser");
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error parsing stored test user:", error);
+        localStorage.removeItem("testUser");
+        setLoading(false);
+      }
+    } else {
+      setLoading(false);
+    }
+  }, []);
 
   // Load user profile data from Supabase
   const loadUserProfile = async (userId: string) => {
@@ -69,45 +109,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return null;
   };
 
-  useEffect(() => {
-    // Set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, currentSession) => {
-        console.log("Auth state changed:", event, currentSession?.user?.id);
-        setSession(currentSession);
-
-        if (currentSession?.user) {
-          const profile = await loadUserProfile(currentSession.user.id);
-          setUser(profile);
-        } else {
-          setUser(null);
-        }
-        
-        setLoading(false);
-      }
-    );
-
-    // Check current session
-    supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
-      console.log("Current session:", currentSession?.user?.id);
-      setSession(currentSession);
-
-      if (currentSession?.user) {
-        const profile = await loadUserProfile(currentSession.user.id);
-        setUser(profile);
-      }
-      
-      setLoading(false);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
+      
+      // Find test user
+      const testUser = TEST_USERS.find(
+        user => user.email === email && user.password === password
+      );
+      
+      if (testUser) {
+        // Create user profile without password field
+        const userProfile: UserProfile = {
+          id: testUser.id,
+          email: testUser.email,
+          name: testUser.name,
+          role: testUser.role as UserProfile["role"],
+          status: testUser.status as "active" | "inactive",
+          subscription: testUser.subscription
+        };
+        
+        // Save to local storage and state
+        localStorage.setItem("testUser", JSON.stringify(userProfile));
+        setUser(userProfile);
+        toast.success("Connexion réussie");
+        return;
+      }
+      
+      // If no test user matches, try Supabase authentication as fallback
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
@@ -126,24 +155,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signup = async (email: string, password: string, name: string) => {
     try {
       setLoading(true);
-      // Changed to signUp without email confirmation
-      const { error } = await supabase.auth.signUp({ 
-        email, 
-        password,
-        options: {
-          data: {
-            name
-          },
-          emailRedirectTo: window.location.origin + '/login',
-        }
-      });
       
-      if (error) {
-        toast.error(error.message);
-      } else {
-        // No longer telling users to check email for confirmation
-        toast.success("Compte créé avec succès. Vous pouvez maintenant vous connecter.");
-      }
+      // Create new test user
+      const newId = (TEST_USERS.length + 1).toString();
+      const newUser = {
+        id: newId,
+        email,
+        password,
+        name,
+        role: "user" as const,
+        status: "active" as const,
+        subscription: "trial"
+      };
+      
+      // Add to test users
+      TEST_USERS.push(newUser);
+      
+      // Create user profile without password
+      const userProfile: UserProfile = {
+        id: newId,
+        email,
+        name,
+        role: "user",
+        status: "active",
+        subscription: "trial"
+      };
+      
+      // Save to local storage and state
+      localStorage.setItem("testUser", JSON.stringify(userProfile));
+      setUser(userProfile);
+      toast.success("Compte créé avec succès. Vous êtes maintenant connecté.");
+      
     } catch (error) {
       toast.error("Une erreur est survenue lors de l'inscription");
       console.error(error);
@@ -154,7 +196,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      await supabase.auth.signOut();
+      // Clear test user from local storage
+      localStorage.removeItem("testUser");
+      setUser(null);
+      
+      // Also sign out from Supabase if there was a session
+      if (session) {
+        await supabase.auth.signOut();
+      }
+      
       toast.info("Déconnexion réussie");
     } catch (error) {
       toast.error("Une erreur est survenue lors de la déconnexion");
