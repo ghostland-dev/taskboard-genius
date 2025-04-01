@@ -20,7 +20,7 @@ type UserProfile = {
 type AuthContextType = {
   user: UserProfile | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<{success: boolean}>;
   signup: (email: string, password: string, name: string, isSuperAdmin?: boolean) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
@@ -111,19 +111,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<{success: boolean}> => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      
+      // Sanitize input
+      const sanitizedEmail = email.trim().toLowerCase();
+      
+      // Valider l'email côté serveur
+      if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(sanitizedEmail)) {
+        toast.error("Format d'email invalide");
+        return {success: false};
+      }
+      
+      const { error } = await supabase.auth.signInWithPassword({ 
+        email: sanitizedEmail, 
+        password 
+      });
       
       if (error) {
-        toast.error(error.message);
+        // Ne pas donner d'informations spécifiques sur l'erreur
+        toast.error("Identifiants invalides");
+        console.error("Login error:", error);
+        return {success: false};
       } else {
         toast.success("Connexion réussie");
+        return {success: true};
       }
     } catch (error) {
       toast.error("Une erreur est survenue lors de la connexion");
       console.error(error);
+      return {success: false};
     } finally {
       setLoading(false);
     }
@@ -133,20 +151,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       
+      // Sanitize inputs
+      const sanitizedEmail = email.trim().toLowerCase();
+      const sanitizedName = name.trim();
+      
+      // Validation supplémentaire côté serveur
+      if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(sanitizedEmail)) {
+        toast.error("Format d'email invalide");
+        return;
+      }
+      
+      if (sanitizedName.length < 2) {
+        toast.error("Le nom doit contenir au moins 2 caractères");
+        return;
+      }
+      
+      if (password.length < 8) {
+        toast.error("Le mot de passe doit contenir au moins 8 caractères");
+        return;
+      }
+      
       // For super admins, we'll use emailRedirect: false to avoid email verification
       const options = {
-        data: { name },
+        data: { name: sanitizedName },
         emailRedirect: isSuperAdmin ? undefined : `${window.location.origin}/login`
       };
       
       const { error } = await supabase.auth.signUp({ 
-        email, 
+        email: sanitizedEmail, 
         password,
         options
       });
       
       if (error) {
-        toast.error(error.message);
+        // Message d'erreur générique pour ne pas révéler d'informations sensibles
+        if (error.message.includes("already registered")) {
+          toast.error("Cet email est déjà utilisé");
+        } else {
+          toast.error("Une erreur est survenue lors de l'inscription");
+          console.error("Signup error:", error);
+        }
       } else {
         if (isSuperAdmin) {
           // For super admins, automatically create a profile with superadmin role
@@ -156,7 +200,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Create profile for superadmin
             await (supabase.from("profiles") as any).insert({
               id: newUser.id,
-              name,
+              name: sanitizedName,
               role: "superadmin",
               status: "active",
               subscription: "premium"
