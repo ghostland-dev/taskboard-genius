@@ -19,18 +19,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Loader2, MoreVertical } from "lucide-react";
-
-type UserProfile = {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  status: string;
-  subscription: string;
-  created_at: string;
-  tasks_count?: number;
-};
+import { Loader2, MoreVertical, User } from "lucide-react";
+import { UserProfile } from "../types";
 
 type UsersListProps = {
   users: UserProfile[];
@@ -178,8 +168,5 @@ const UsersList = ({
     </Table>
   );
 };
-
-// Fix for lucide-react User icon missing
-import { User } from "lucide-react";
 
 export default UsersList;
