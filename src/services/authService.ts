@@ -61,8 +61,7 @@ export const authService = {
       }
 
       const options = {
-        data: { name: sanitizedName },
-        emailRedirectTo: `${window.location.origin}/login`,
+        data: { name: sanitizedName }
       };
 
       const { error } = await supabase.auth.signUp({
@@ -80,16 +79,7 @@ export const authService = {
         }
         return false;
       } else {
-        toast.success("Compte créé. Vérifiez votre email.");
-        
-        // Envoyer un email de bienvenue via notre propre fonction
-        try {
-          await sendWelcomeEmail(sanitizedEmail, sanitizedName);
-        } catch (emailError) {
-          console.error("Erreur lors de l'envoi de l'email de bienvenue:", emailError);
-          // On ne bloque pas l'inscription si l'email échoue
-        }
-        
+        toast.success("Compte créé avec succès");
         return true;
       }
     } catch (error) {
@@ -109,37 +99,6 @@ export const authService = {
       console.error(error);
       return false;
     }
-  },
-  
-  sendWelcomeEmail: async (email: string, name: string): Promise<boolean> => {
-    try {
-      const { data, error } = await supabase.functions.invoke("send-email", {
-        body: {
-          to: email,
-          subject: "Bienvenue sur Task Manager",
-          body: `
-            <h1>Bienvenue ${name} !</h1>
-            <p>Merci de vous être inscrit sur Task Manager.</p>
-            <p>Vous pouvez maintenant vous connecter et commencer à utiliser l'application.</p>
-            <p>Cordialement,<br>L'équipe Task Manager</p>
-          `
-        }
-      });
-      
-      if (error) {
-        console.error("Erreur lors de l'envoi de l'email:", error);
-        return false;
-      }
-      
-      console.log("Email envoyé avec succès:", data);
-      return true;
-    } catch (error) {
-      console.error("Exception lors de l'envoi de l'email:", error);
-      return false;
-    }
   }
 };
 
-export const sendWelcomeEmail = async (email: string, name: string): Promise<boolean> => {
-  return authService.sendWelcomeEmail(email, name);
-};

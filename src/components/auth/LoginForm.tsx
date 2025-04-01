@@ -89,12 +89,6 @@ const LoginForm: React.FC = () => {
             />
           </div>
         </div>
-
-        <div className="text-sm text-muted-foreground">
-          <strong>Utilisateurs de test:</strong> user@example.com, admin@example.com, superadmin@example.com 
-          <br />
-          <strong>Mot de passe:</strong> password123
-        </div>
       </CardContent>
       
       <CardFooter>

@@ -4,11 +4,10 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import TestCredentials from "@/components/TestCredentials";
+import FirstLaunchInitializer from "@/components/FirstLaunchInitializer";
 import AuthHeader from "@/components/auth/AuthHeader";
 import LoginForm from "@/components/auth/LoginForm";
 import SignupForm from "@/components/auth/SignupForm";
-import FirstLaunchInitializer from "@/components/FirstLaunchInitializer";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -31,8 +30,6 @@ const Login: React.FC = () => {
       <FirstLaunchInitializer />
       
       <AuthHeader />
-      
-      <TestCredentials />
       
       <Card className="w-full max-w-md shadow-lg border-0 animate-fade-in">
         <Tabs defaultValue="login" value={activeTab} onValueChange={setActiveTab}>
