@@ -27,7 +27,14 @@ export const useUserRole = (
       
       // Update local state
       setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u));
-      toast.success("Rôle mis à jour avec succès");
+      
+      const roleDisplayNames = {
+        user: "Utilisateur",
+        admin: "Administrateur",
+        superadmin: "Super Admin"
+      };
+      
+      toast.success(`Rôle mis à jour vers ${roleDisplayNames[newRole as keyof typeof roleDisplayNames] || newRole}`);
     } catch (error) {
       console.error('Error in handleRoleChange:', error);
       toast.error("Une erreur est survenue");
