@@ -13,7 +13,78 @@ services:
       - .env
     networks:
       - app-network
+    depends_on:
+      - supabase-db
+      - supabase-api
+
+  supabase-db:
+    image: supabase/postgres:15.1.0.117
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: pg_isready -U postgres -h localhost
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  supabase-api:
+    image: supabase/supabase-rest:latest
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      PGRST_DB_URI: postgres://postgres:postgres@supabase-db:5432/postgres
+      PGRST_DB_SCHEMA: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: your-super-secret-jwt-token-with-at-least-32-characters
+    depends_on:
+      - supabase-db
+    networks:
+      - app-network
+
+  supabase-auth:
+    image: supabase/gotrue:latest
+    restart: always
+    ports:
+      - "9999:9999"
+    environment:
+      GOTRUE_JWT_SECRET: your-super-secret-jwt-token-with-at-least-32-characters
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_API_HOST: 0.0.0.0
+      PORT: 9999
+      GOTRUE_DB_DATABASE_URL: postgres://postgres:postgres@supabase-db:5432/postgres
+      GOTRUE_SITE_URL: http://localhost:80
+      GOTRUE_SMTP_HOST: mailhog
+      GOTRUE_SMTP_PORT: 1025
+      GOTRUE_SMTP_USER: test
+      GOTRUE_SMTP_PASS: test
+      GOTRUE_SMTP_ADMIN_EMAIL: admin@example.com
+    depends_on:
+      - supabase-db
+    networks:
+      - app-network
+
+  mailhog:
+    image: mailhog/mailhog
+    restart: always
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+    networks:
+      - app-network
 
 networks:
   app-network:
     driver: bridge
+
+volumes:
+  pg-data:
