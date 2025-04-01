@@ -12,6 +12,7 @@ export const useUserStats = (users: UserProfile[]) => {
     premium: 0
   });
 
+  // This function should directly calculate and set stats
   const updateStats = (usersList: UserProfile[]) => {
     setStats({
       total: usersList.length,

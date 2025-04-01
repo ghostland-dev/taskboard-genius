@@ -9,9 +9,7 @@ import { UserProfile, UserStats } from "../types";
  */
 export const useUserStatus = (
   users: UserProfile[],
-  setUsers: React.Dispatch<React.SetStateAction<UserProfile[]>>,
-  stats: UserStats,
-  setStats: React.Dispatch<React.SetStateAction<UserStats>>
+  setUsers: React.Dispatch<React.SetStateAction<UserProfile[]>>
 ) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -32,14 +30,6 @@ export const useUserStatus = (
       
       // Update local state
       setUsers(users.map(u => u.id === userId ? { ...u, status: newStatus } : u));
-      
-      // Update stats
-      setStats({
-        ...stats,
-        active: newStatus === 'active' 
-          ? stats.active + 1 
-          : stats.active - 1
-      });
       
       toast.success("Statut mis à jour avec succès");
     } catch (error) {

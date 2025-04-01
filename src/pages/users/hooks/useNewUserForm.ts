@@ -11,7 +11,7 @@ export const useNewUserForm = (
   users: UserProfile[],
   setUsers: React.Dispatch<React.SetStateAction<UserProfile[]>>,
   stats: UserStats,
-  setStats: React.Dispatch<React.SetStateAction<UserStats>>
+  updateStats: (usersList: UserProfile[]) => void
 ) => {
   // New user form state
   const [newUser, setNewUser] = useState({
@@ -90,14 +90,11 @@ export const useNewUserForm = (
             tasks_count: 0
           };
           
-          setUsers([...users, newUserProfile]);
+          const updatedUsers = [...users, newUserProfile];
+          setUsers(updatedUsers);
           
           // Update stats
-          setStats({
-            total: stats.total + 1,
-            active: newUser.status === 'active' ? stats.active + 1 : stats.active,
-            premium: newUser.subscription === 'premium' ? stats.premium + 1 : stats.premium
-          });
+          updateStats(updatedUsers);
         }
       }
     } catch (error) {

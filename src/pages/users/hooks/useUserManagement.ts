@@ -14,7 +14,7 @@ export const useUserManagement = () => {
   const { users, setUsers, loading } = useFetchUsers();
   const { stats, updateStats } = useUserStats(users);
   const { handleRoleChange } = useUserRole(users, setUsers);
-  const { handleStatusChange } = useUserStatus(users, setUsers, stats, updateStats);
+  const { handleStatusChange } = useUserStatus(users, setUsers);
   const { 
     newUser, 
     setNewUser, 
