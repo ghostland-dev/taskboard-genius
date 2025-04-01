@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import Sidebar from "./Sidebar";
-import { useAuth } from "@/contexts/auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { Navigate, Outlet } from "react-router-dom";
 import { Toaster } from "sonner";
 import { cn } from "@/lib/utils";

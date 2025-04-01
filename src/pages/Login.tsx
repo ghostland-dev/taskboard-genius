@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
-import { Navigate, Link } from "react-router-dom";
-import { useAuth } from "@/contexts/auth";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,39 +13,20 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Lock, Mail, User } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { toast } from "sonner";
+import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 
 const Login: React.FC = () => {
-  // Login state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  
-  // Register state
-  const [registerEmail, setRegisterEmail] = useState("");
-  const [registerPassword, setRegisterPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [name, setName] = useState("");
+  const { login, isAuthenticated } = useAuth();
 
-  const [activeTab, setActiveTab] = useState("login");
-  const { login, signup, isAuthenticated, loading } = useAuth();
-
-  const handleLoginSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await login(email, password);
-  };
-
-  const handleRegisterSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (registerPassword !== confirmPassword) {
-      toast.error("Les mots de passe ne correspondent pas");
-      return;
-    }
-    
-    await signup(registerEmail, registerPassword, name);
+    setIsLoading(true);
+    login(email, password);
+    setIsLoading(false);
   };
 
   if (isAuthenticated) {
@@ -83,7 +64,7 @@ const Login: React.FC = () => {
         </div>
       </div>
       
-      {/* Right side - Login/Register form */}
+      {/* Right side - Login form */}
       <div className="flex flex-col items-center justify-center p-6 md:p-8 flex-1 md:w-1/2 bg-slate-50">
         <div className="w-full max-w-md">
           <div className="md:hidden text-center mb-8">
@@ -100,165 +81,84 @@ const Login: React.FC = () => {
 
           <Card className="border-none shadow-lg">
             <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl font-bold">Accès</CardTitle>
+              <CardTitle className="text-2xl font-bold">Connexion</CardTitle>
               <CardDescription>
-                Connectez-vous ou créez un compte pour commencer
+                Entrez vos identifiants pour accéder à votre espace
               </CardDescription>
             </CardHeader>
-            
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid grid-cols-2 mx-6">
-                <TabsTrigger value="login">Connexion</TabsTrigger>
-                <TabsTrigger value="register">Inscription</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="login">
-                <form onSubmit={handleLoginSubmit}>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="email" className="text-sm font-medium">Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
-                        <Input
-                          id="email"
-                          type="email"
-                          placeholder="votre@email.com"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className="pl-10"
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="password" className="text-sm font-medium">Mot de passe</Label>
-                        <Link to="/forgot-password" className="text-primary hover:underline text-xs">
-                          Mot de passe oublié?
-                        </Link>
-                      </div>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
-                        <Input
-                          id="password"
-                          type={showPassword ? "text" : "password"}
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          className="pl-10"
-                          required
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-5 w-5" />
-                          ) : (
-                            <Eye className="h-5 w-5" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <Button
-                      type="submit"
-                      className="w-full bg-primary hover:bg-primary/90"
-                      disabled={loading}
+            <form onSubmit={handleSubmit}>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="votre@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password" className="text-sm font-medium">Mot de passe</Label>
+                    <a href="#" className="text-primary hover:underline text-xs">
+                      Mot de passe oublié?
+                    </a>
+                  </div>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="pl-10"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
                     >
-                      {loading ? "Connexion..." : "Se connecter"}
-                    </Button>
-                  </CardFooter>
-                </form>
-              </TabsContent>
-              
-              <TabsContent value="register">
-                <form onSubmit={handleRegisterSubmit}>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="register-name" className="text-sm font-medium">Nom</Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
-                        <Input
-                          id="register-name"
-                          type="text"
-                          placeholder="Votre nom"
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
-                          className="pl-10"
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="register-email" className="text-sm font-medium">Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
-                        <Input
-                          id="register-email"
-                          type="email"
-                          placeholder="votre@email.com"
-                          value={registerEmail}
-                          onChange={(e) => setRegisterEmail(e.target.value)}
-                          className="pl-10"
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="register-password" className="text-sm font-medium">Mot de passe</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
-                        <Input
-                          id="register-password"
-                          type={showPassword ? "text" : "password"}
-                          value={registerPassword}
-                          onChange={(e) => setRegisterPassword(e.target.value)}
-                          className="pl-10"
-                          required
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-5 w-5" />
-                          ) : (
-                            <Eye className="h-5 w-5" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="confirm-password" className="text-sm font-medium">Confirmer le mot de passe</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
-                        <Input
-                          id="confirm-password"
-                          type={showPassword ? "text" : "password"}
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="pl-10"
-                          required
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <Button
-                      type="submit"
-                      className="w-full bg-primary hover:bg-primary/90"
-                      disabled={loading}
-                    >
-                      {loading ? "Création..." : "Créer un compte"}
-                    </Button>
-                  </CardFooter>
-                </form>
-              </TabsContent>
-            </Tabs>
+                      {showPassword ? (
+                        <EyeOff className="h-5 w-5" />
+                      ) : (
+                        <Eye className="h-5 w-5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter className="flex flex-col">
+                <Button
+                  type="submit"
+                  className="w-full bg-primary hover:bg-primary/90"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Connexion..." : "Se connecter"}
+                </Button>
+                <div className="mt-4 text-center text-sm">
+                  <p>
+                    Pas encore de compte?{" "}
+                    <a href="#" className="text-primary hover:underline">
+                      Créer un compte
+                    </a>
+                  </p>
+                </div>
+              </CardFooter>
+            </form>
           </Card>
+
+          <div className="mt-6 text-center text-slate-500 text-sm">
+            <p>
+              Pour une démo: <span className="font-medium">superadmin@nomdomain.fr / HolySsit++ @!</span>
+            </p>
+          </div>
         </div>
       </div>
     </div>

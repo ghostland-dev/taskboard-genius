@@ -313,36 +313,6 @@ export type Database = {
           },
         ]
       }
-      profiles: {
-        Row: {
-          created_at: string | null
-          id: string
-          name: string | null
-          role: string | null
-          status: string | null
-          subscription: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id: string
-          name?: string | null
-          role?: string | null
-          status?: string | null
-          subscription?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          name?: string | null
-          role?: string | null
-          status?: string | null
-          subscription?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       provider_reviews: {
         Row: {
           comment: string | null
@@ -811,38 +781,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_stats: {
-        Row: {
-          created_at: string | null
-          last_login: string | null
-          tasks_count: number | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          last_login?: string | null
-          tasks_count?: number | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          last_login?: string | null
-          tasks_count?: number | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_stats_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Views: {
       [_ in never]: never
@@ -855,12 +793,6 @@ export type Database = {
           p_end_time: string
         }
         Returns: boolean
-      }
-      promote_to_superadmin: {
-        Args: {
-          user_email: string
-        }
-        Returns: string
       }
     }
     Enums: {
