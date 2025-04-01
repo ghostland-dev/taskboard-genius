@@ -13,9 +13,10 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Lock, Mail, User } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, User, Shield } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const Login: React.FC = () => {
   // Login state
@@ -28,6 +29,7 @@ const Login: React.FC = () => {
   const [registerPassword, setRegisterPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   const [activeTab, setActiveTab] = useState("login");
   const { login, signup, isAuthenticated, loading } = useAuth();
@@ -45,7 +47,7 @@ const Login: React.FC = () => {
       return;
     }
     
-    await signup(registerEmail, registerPassword, name);
+    await signup(registerEmail, registerPassword, name, isSuperAdmin);
   };
 
   if (isAuthenticated) {
@@ -243,6 +245,28 @@ const Login: React.FC = () => {
                           className="pl-10"
                           required
                         />
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="super-admin" 
+                        checked={isSuperAdmin}
+                        onCheckedChange={(checked) => {
+                          setIsSuperAdmin(checked === true);
+                        }}
+                      />
+                      <div className="grid gap-1.5 leading-none">
+                        <label
+                          htmlFor="super-admin"
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center space-x-1"
+                        >
+                          <Shield className="h-4 w-4 text-primary" />
+                          <span>Créer un compte Super Admin</span>
+                        </label>
+                        <p className="text-xs text-muted-foreground">
+                          Les Super Admins sont créés sans vérification d'email requise
+                        </p>
                       </div>
                     </div>
                   </CardContent>

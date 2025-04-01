@@ -17,7 +17,7 @@ type AuthContextType = {
   user: UserProfile | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, name: string) => Promise<void>;
+  signup: (email: string, password: string, name: string, isSuperAdmin?: boolean) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   session: Session | null;
@@ -121,23 +121,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signup = async (email: string, password: string, name: string) => {
+  const signup = async (email: string, password: string, name: string, isSuperAdmin = false) => {
     try {
       setLoading(true);
+      
+      // For super admins, we'll use emailRedirect: false to avoid email verification
+      const options = {
+        data: { name },
+        emailRedirect: isSuperAdmin ? undefined : `${window.location.origin}/login`
+      };
+      
       const { error } = await supabase.auth.signUp({ 
         email, 
         password,
-        options: {
-          data: {
-            name
-          }
-        }
+        options
       });
       
       if (error) {
         toast.error(error.message);
       } else {
-        toast.success("Compte créé avec succès. Vérifiez votre email pour confirmer.");
+        if (isSuperAdmin) {
+          // For super admins, automatically create a profile with superadmin role
+          const { data: { user: newUser } } = await supabase.auth.getUser();
+          
+          if (newUser) {
+            // Create profile for superadmin
+            await (supabase.from("profiles") as any).insert({
+              id: newUser.id,
+              name,
+              role: "superadmin",
+              status: "active",
+              subscription: "premium"
+            });
+            
+            toast.success("Compte superadmin créé avec succès. Vous pouvez vous connecter immédiatement.");
+          }
+        } else {
+          toast.success("Compte créé avec succès. Vérifiez votre email pour confirmer.");
+        }
       }
     } catch (error) {
       toast.error("Une erreur est survenue lors de l'inscription");
