@@ -60,17 +60,14 @@ export const authService = {
         return false;
       }
 
-      // Définir les options avec emailConfirm: false pour désactiver la vérification par email
-      const options = {
-        data: { name: sanitizedName },
-        emailRedirectTo: window.location.origin,
-        emailConfirm: false
-      };
-
+      // Signup without email verification
       const { error } = await supabase.auth.signUp({
         email: sanitizedEmail,
         password,
-        options,
+        options: {
+          data: { name: sanitizedName },
+          emailRedirectTo: window.location.origin,
+        }
       });
 
       if (error) {
@@ -82,6 +79,8 @@ export const authService = {
         }
         return false;
       } else {
+        // Since emailConfirm is disabled in Supabase settings, we can log in immediately
+        await authService.login(sanitizedEmail, password);
         toast.success("Compte créé avec succès");
         return true;
       }
@@ -100,6 +99,26 @@ export const authService = {
     } catch (error) {
       toast.error("Erreur lors de la déconnexion");
       console.error(error);
+      return false;
+    }
+  },
+  
+  // Helper method to clean database for testing purposes
+  // This should only be used in development environments
+  resetTestUsers: async (): Promise<boolean> => {
+    try {
+      if (import.meta.env.VITE_APP_ENV !== 'development') {
+        console.error('Cannot reset users in non-development environment');
+        return false;
+      }
+      
+      await supabase.functions.invoke("create-test-users", {
+        body: { admin_secret: "task_manager_secure_key" }
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Error resetting test users:", error);
       return false;
     }
   }
