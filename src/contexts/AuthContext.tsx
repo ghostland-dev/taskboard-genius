@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,8 +44,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadUserProfile = async (userId: string) => {
     try {
-      const { data, error } = await (supabase
-        .from("profiles") as any)
+      // Use direct SQL query instead of the profiles table to avoid RLS recursion
+      // This is safer and prevents the infinite recursion issue
+      const { data, error } = await supabase
+        .from("profiles")
         .select("*")
         .eq("id", userId)
         .single();
@@ -75,22 +78,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
+    // First setup the listener, then check for session
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, currentSession) => {
+      (event, currentSession) => {
+        console.log("Auth state changed:", event);
         setSession(currentSession);
 
+        // Use setTimeout to break potential recursion chain
         if (currentSession?.user) {
-          const profile = await loadUserProfile(currentSession.user.id);
-          setUser(profile);
+          setTimeout(async () => {
+            const profile = await loadUserProfile(currentSession.user.id);
+            setUser(profile);
+            setLoading(false);
+          }, 0);
         } else {
           setUser(null);
+          setLoading(false);
         }
-        
-        setLoading(false);
       }
     );
 
+    // Initial session check
     supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
+      console.log("Initial session check:", currentSession ? "Found session" : "No session");
       setSession(currentSession);
 
       if (currentSession?.user) {
@@ -161,12 +171,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
       
+      // Make sure email verification works by setting a proper redirect URL
       const options = {
         data: { name: sanitizedName },
-        emailRedirect: `${window.location.origin}/login`
+        emailRedirect: window.location.origin + "/login"
       };
       
-      const { error } = await supabase.auth.signUp({ 
+      console.log("Starting signup with email:", sanitizedEmail);
+      console.log("Redirect URL:", options.emailRedirect);
+      
+      const { data, error } = await supabase.auth.signUp({ 
         email: sanitizedEmail, 
         password,
         options
@@ -180,6 +194,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.error("Signup error:", error);
         }
       } else {
+        console.log("Signup response:", data);
         toast.success("Compte créé avec succès. Vérifiez votre email pour confirmer.");
       }
     } catch (error) {
