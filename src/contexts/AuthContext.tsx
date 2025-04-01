@@ -11,6 +11,7 @@ type UserProfile = {
   role: "user" | "admin" | "superadmin";
   status: "active" | "inactive";
   subscription: string;
+  stripe_customer_id?: string;
 };
 
 // Default users for testing
@@ -22,7 +23,8 @@ const TEST_USERS = [
     name: "Admin Test",
     role: "admin",
     status: "active",
-    subscription: "premium"
+    subscription: "premium",
+    stripe_customer_id: "cus_test_1"
   },
   {
     id: "2",
@@ -31,7 +33,8 @@ const TEST_USERS = [
     name: "User Test",
     role: "user",
     status: "active",
-    subscription: "trial"
+    subscription: "trial",
+    stripe_customer_id: "cus_test_2"
   }
 ];
 
@@ -43,6 +46,7 @@ type AuthContextType = {
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   session: Session | null;
+  updateUserSubscription: (subscription: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -59,6 +63,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<UserProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+
+  // Check for URL parameters
+  useEffect(() => {
+    const queryParams = new URLSearchParams(window.location.search);
+    const subscriptionStatus = queryParams.get('subscription');
+    
+    if (subscriptionStatus === 'success' && user) {
+      toast.success("Abonnement souscrit avec succès!");
+      
+      // In a real implementation, you would check with Stripe 
+      // For now, we'll just update the user's subscription for the demo
+      if (user.email === "user@exemple.com") {
+        updateUserSubscription("standard").then(() => {
+          // Remove query params from URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+        });
+      }
+    } else if (subscriptionStatus === 'canceled') {
+      toast.info("Abonnement annulé");
+      
+      // Remove query params from URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [user, window.location.search]);
 
   // Check for test user in local storage on initial load
   useEffect(() => {
@@ -100,7 +128,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           name: data.name,
           role: data.role as UserProfile["role"],
           status: data.status as "active" | "inactive",
-          subscription: data.subscription
+          subscription: data.subscription,
+          stripe_customer_id: data.stripe_customer_id
         };
       }
     } catch (error) {
@@ -126,7 +155,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           name: testUser.name,
           role: testUser.role as UserProfile["role"],
           status: testUser.status as "active" | "inactive",
-          subscription: testUser.subscription
+          subscription: testUser.subscription,
+          stripe_customer_id: testUser.stripe_customer_id
         };
         
         // Save to local storage and state
@@ -165,7 +195,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         name,
         role: "user" as const,
         status: "active" as const,
-        subscription: "trial"
+        subscription: "trial",
+        stripe_customer_id: `cus_test_${newId}`
       };
       
       // Add to test users
@@ -178,7 +209,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         name,
         role: "user",
         status: "active",
-        subscription: "trial"
+        subscription: "trial",
+        stripe_customer_id: `cus_test_${newId}`
       };
       
       // Save to local storage and state
@@ -212,6 +244,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateUserSubscription = async (subscription: string) => {
+    if (!user) return;
+    
+    try {
+      // Update local user state
+      const updatedUser = { ...user, subscription };
+      setUser(updatedUser);
+      
+      // Update in local storage
+      localStorage.setItem("testUser", JSON.stringify(updatedUser));
+      
+      // In a real implementation, you would also update this in your database
+      toast.success(`Votre abonnement a été mis à jour vers ${subscription}`);
+    } catch (error) {
+      console.error("Error updating subscription:", error);
+      toast.error("Une erreur est survenue lors de la mise à jour de l'abonnement");
+    }
+  };
+
   const value = {
     user,
     loading,
@@ -219,7 +270,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signup,
     logout,
     isAuthenticated: !!user,
-    session
+    session,
+    updateUserSubscription
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
