@@ -11,6 +11,10 @@ type UserProfile = {
   role: "user" | "admin" | "superadmin";
   status: "active" | "inactive";
   subscription: string;
+  stripe_customer_id?: string;
+  subscription_id?: string;
+  subscription_status?: string;
+  subscription_period_end?: string;
 };
 
 type AuthContextType = {
@@ -60,7 +64,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           name: data.name,
           role: data.role as UserProfile["role"],
           status: data.status as "active" | "inactive",
-          subscription: data.subscription
+          subscription: data.subscription,
+          stripe_customer_id: data.stripe_customer_id,
+          subscription_id: data.subscription_id,
+          subscription_status: data.subscription_status,
+          subscription_period_end: data.subscription_period_end
         };
       }
     } catch (error) {
