@@ -1,17 +1,35 @@
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useState, useContext, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Session } from "@supabase/supabase-js";
-import { AuthContextType, UserProfile } from "@/types/auth";
-import { useUserProfile } from "@/hooks/useUserProfile";
-import { authService } from "@/services/authService";
+import { Session, User } from "@supabase/supabase-js";
+
+type UserProfile = {
+  id: string;
+  email: string;
+  name: string;
+  role: "user" | "admin" | "superadmin";
+  status: "active" | "inactive";
+  subscription: string;
+};
+
+type AuthContextType = {
+  user: UserProfile | null;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  signup: (email: string, password: string, name: string) => Promise<void>;
+  logout: () => Promise<void>;
+  isAuthenticated: boolean;
+  session: Session | null;
+};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const useAuth = (): AuthContextType => {
+export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used within an AuthProvider");
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
   return context;
 };
 
@@ -19,124 +37,134 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<UserProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const { loadUserProfile } = useUserProfile();
 
-  const refreshUser = async () => {
-    if (session?.user) {
-      try {
-        const profile = await loadUserProfile(session.user.id, session);
-        setUser(profile);
-      } catch (error) {
-        console.error("Error refreshing user profile:", error);
+  // Load user profile data from Supabase
+  const loadUserProfile = async (userId: string) => {
+    try {
+      // Type assertion to tell TypeScript to trust that "profiles" exists
+      const { data, error } = await (supabase
+        .from("profiles") as any)
+        .select("*")
+        .eq("id", userId)
+        .single();
+
+      if (error) {
+        console.error("Error loading user profile:", error);
+        return null;
       }
+
+      if (data) {
+        return {
+          id: data.id,
+          email: session?.user.email || "",
+          name: data.name,
+          role: data.role as UserProfile["role"],
+          status: data.status as "active" | "inactive",
+          subscription: data.subscription
+        };
+      }
+    } catch (error) {
+      console.error("Error in loadUserProfile:", error);
     }
+    return null;
   };
 
   useEffect(() => {
-    const initAuth = async () => {
-      try {
-        console.log("Initializing authentication...");
-        setLoading(true);
-        
-        // Set up auth state listener FIRST
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-          console.log("Auth state changed:", event, !!currentSession);
-          setSession(currentSession);
-          
-          if (currentSession?.user) {
-            try {
-              const profile = await loadUserProfile(currentSession.user.id, currentSession);
-              setUser(profile);
-            } catch (error) {
-              console.error("Error loading user profile on auth change:", error);
-              setUser(null);
-            }
-          } else {
-            setUser(null);
-          }
-          
-          setLoading(false);
-        });
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, currentSession) => {
+        setSession(currentSession);
 
-        // THEN check for existing session
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        console.log("Initial session check:", !!currentSession);
-        
         if (currentSession?.user) {
-          try {
-            const profile = await loadUserProfile(currentSession.user.id, currentSession);
-            setUser(profile);
-            setSession(currentSession);
-          } catch (error) {
-            console.error("Error loading initial user profile:", error);
-            setUser(null);
-          }
+          const profile = await loadUserProfile(currentSession.user.id);
+          setUser(profile);
+        } else {
+          setUser(null);
         }
         
         setLoading(false);
-        
-        return () => {
-          subscription.unsubscribe();
-        };
-      } catch (error) {
-        console.error("Error initializing auth:", error);
-        setLoading(false);
       }
-    };
+    );
 
-    initAuth();
+    // Check current session
+    supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
+      setSession(currentSession);
+
+      if (currentSession?.user) {
+        const profile = await loadUserProfile(currentSession.user.id);
+        setUser(profile);
+      }
+      
+      setLoading(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
     try {
-      console.log("Login attempt starting...");
       setLoading(true);
-      const result = await authService.login(email, password);
-      console.log("Login result:", result);
-      return result;
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Connexion réussie");
+      }
     } catch (error) {
-      console.error("Login error in context:", error);
-      return { success: false };
-    } finally {
-      // Don't set loading to false here, it will be updated by the auth listener
-    }
-  };
-
-  const signup = async (email: string, password: string, name: string): Promise<boolean> => {
-    try {
-      setLoading(true);
-      const result = await authService.signup(email, password, name);
-      return result;
-    } catch (error) {
-      console.error("Signup error in context:", error);
-      return false;
-    } finally {
-      // Don't set loading to false here, it will be updated by the auth listener
-    }
-  };
-
-  const logout = async () => {
-    try {
-      setLoading(true);
-      await authService.logout();
-      setUser(null);
-      setSession(null);
-    } catch (error) {
-      console.error("Logout error:", error);
+      toast.error("Une erreur est survenue lors de la connexion");
+      console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
-  const value: AuthContextType = {
+  const signup = async (email: string, password: string, name: string) => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          data: {
+            name
+          }
+        }
+      });
+      
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Compte créé avec succès. Vérifiez votre email pour confirmer.");
+      }
+    } catch (error) {
+      toast.error("Une erreur est survenue lors de l'inscription");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.info("Déconnexion réussie");
+    } catch (error) {
+      toast.error("Une erreur est survenue lors de la déconnexion");
+      console.error(error);
+    }
+  };
+
+  const value = {
     user,
     loading,
     login,
     signup,
     logout,
     isAuthenticated: !!user,
-    session,
-    refreshUser,
+    session
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

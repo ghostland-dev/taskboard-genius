@@ -1,70 +1,73 @@
+# Welcome to your Lovable project
 
-# Task Manager Application
+## Project info
 
-Une application de gestion de tâches avec authentification et abonnements.
+**URL**: https://lovable.dev/projects/7f21f118-6497-4254-a485-863a78d9bfb5
 
-## Fonctionnalités
+## How can I edit this code?
 
-- Authentification des utilisateurs (inscription, connexion, déconnexion)
-- Gestion des tâches (création, modification, suppression)
-- Tableau de bord avec statistiques
-- Calendrier des tâches
-- Gestion des utilisateurs (pour administrateurs)
-- Abonnements premium via Stripe
+There are several ways of editing your application.
 
-## Prérequis
+**Use Lovable**
 
-- Node.js 18+ 
-- pnpm ou npm 
-- Compte Supabase (pour le backend)
-- Compte Stripe (pour les paiements)
+Simply visit the [Lovable Project](https://lovable.dev/projects/7f21f118-6497-4254-a485-863a78d9bfb5) and start prompting.
 
-## Installation
+Changes made via Lovable will be committed automatically to this repo.
 
-1. Cloner le dépôt
-```bash
-git clone https://github.com/votre-nom/task-manager.git
-cd task-manager
+**Use your preferred IDE**
+
+If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+
+The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+
+Follow these steps:
+
+```sh
+# Step 1: Clone the repository using the project's Git URL.
+git clone <YOUR_GIT_URL>
+
+# Step 2: Navigate to the project directory.
+cd <YOUR_PROJECT_NAME>
+
+# Step 3: Install the necessary dependencies.
+npm i
+
+# Step 4: Start the development server with auto-reloading and an instant preview.
+npm run dev
 ```
 
-2. Installer les dépendances
-```bash
-pnpm install
-```
+**Edit a file directly in GitHub**
 
-3. Configurer les variables d'environnement
-```bash
-cp .env.example .env
-```
-Puis modifiez le fichier `.env` avec vos propres clés.
+- Navigate to the desired file(s).
+- Click the "Edit" button (pencil icon) at the top right of the file view.
+- Make your changes and commit the changes.
 
-4. Lancer l'application en développement
-```bash
-pnpm run dev
-```
+**Use GitHub Codespaces**
 
-## Déploiement avec Docker
+- Navigate to the main page of your repository.
+- Click on the "Code" button (green button) near the top right.
+- Select the "Codespaces" tab.
+- Click on "New codespace" to launch a new Codespace environment.
+- Edit files directly within the Codespace and commit and push your changes once you're done.
 
-1. Construire l'image Docker
-```bash
-docker build -t task-manager .
-```
+## What technologies are used for this project?
 
-2. Exécuter l'application avec Docker Compose
-```bash
-docker-compose up -d
-```
+This project is built with .
 
-## Accès à l'application
-
-- URL de développement: http://localhost:5173
-- URL de production: https://votre-domaine.com
-
-## Technologies utilisées
-
-- React
-- TypeScript
-- TailwindCSS
 - Vite
-- Supabase
-- Stripe
+- TypeScript
+- React
+- shadcn-ui
+- Tailwind CSS
+
+## How can I deploy this project?
+
+Simply open [Lovable](https://lovable.dev/projects/7f21f118-6497-4254-a485-863a78d9bfb5) and click on Share -> Publish.
+
+## Can I connect a custom domain to my Lovable project?
+
+Yes it is!
+
+To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+
+Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)

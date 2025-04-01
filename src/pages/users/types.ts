@@ -8,10 +8,6 @@ export type UserProfile = {
   subscription: string;
   created_at: string;
   tasks_count?: number;
-  stripe_customer_id?: string;
-  subscription_id?: string;
-  subscription_status?: string;
-  subscription_period_end?: string;
 };
 
 export type UserStats = {
