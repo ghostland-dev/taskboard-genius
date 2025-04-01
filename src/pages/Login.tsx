@@ -8,6 +8,7 @@ import FirstLaunchInitializer from "@/components/FirstLaunchInitializer";
 import AuthHeader from "@/components/auth/AuthHeader";
 import LoginForm from "@/components/auth/LoginForm";
 import SignupForm from "@/components/auth/SignupForm";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -15,7 +16,6 @@ const Login: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("login");
 
   useEffect(() => {
-    // Only redirect if user is authenticated and loading is complete
     if (isAuthenticated && !loading) {
       console.log("User is authenticated, redirecting to dashboard");
       navigate("/dashboard", { replace: true });
@@ -26,20 +26,25 @@ const Login: React.FC = () => {
     setActiveTab("login");
   };
 
-  // If still loading, show a minimal loading indicator
+  // If still loading, show a better loading indicator with skeletons
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse">Chargement...</div>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-purple-50 to-white p-4">
+        <AuthHeader />
+        
+        <Card className="w-full max-w-md shadow-lg border-0">
+          <div className="p-6 space-y-4">
+            <Skeleton className="h-8 w-3/4 mb-2" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-10 w-full mt-4" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        </Card>
+        
+        <p className="mt-4 text-sm text-muted-foreground">Chargement en cours...</p>
       </div>
     );
-  }
-
-  // If already authenticated but navigation hasn't happened yet, force it
-  if (isAuthenticated) {
-    console.log("User is already authenticated, redirecting to dashboard immediately");
-    setTimeout(() => navigate("/dashboard", { replace: true }), 0);
-    return null;
   }
 
   return (

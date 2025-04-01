@@ -7,8 +7,8 @@ export const useUserProfile = () => {
   const loadUserProfile = async (userId: string, userSession: Session | null): Promise<UserProfile | null> => {
     try {
       // First check if we have a valid session
-      if (!userSession?.user?.email) {
-        console.warn("Email manquant dans la session");
+      if (!userSession?.user) {
+        console.warn("Session manquante lors du chargement du profil");
         return null;
       }
 
@@ -25,8 +25,8 @@ export const useUserProfile = () => {
         // Return a minimal profile when the table might not exist yet
         return {
           id: userId,
-          email: userSession.user.email,
-          name: userSession.user.email.split('@')[0],
+          email: userSession.user.email || "",
+          name: userSession.user.email ? userSession.user.email.split('@')[0] : "User",
           role: "user" as "user" | "admin" | "superadmin"
         };
       }
@@ -38,18 +38,18 @@ export const useUserProfile = () => {
 
       return {
         ...data,
-        email: userSession.user.email,
+        email: userSession.user.email || "",
         role: validatedRole
       } as UserProfile;
     } catch (error) {
       console.error("Erreur loadUserProfile:", error);
       
       // In case of error, return minimal profile
-      if (userSession?.user?.email) {
+      if (userSession?.user) {
         return {
           id: userId,
-          email: userSession.user.email,
-          name: userSession.user.email.split('@')[0],
+          email: userSession.user.email || "",
+          name: userSession.user.email ? userSession.user.email.split('@')[0] : "User",
           role: "user" as "user" | "admin" | "superadmin"
         };
       }
