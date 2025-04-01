@@ -1,12 +1,14 @@
 
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 type User = {
   id: string;
   email: string;
   name: string;
   role: "user" | "admin" | "superadmin";
+  subscription?: "trial" | "standard" | "premium";
 };
 
 type AuthContextType = {
@@ -15,6 +17,7 @@ type AuthContextType = {
   login: (email: string, password: string) => void;
   logout: () => void;
   isAuthenticated: boolean;
+  checkSubscription: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,14 +34,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
+  // Function to check subscription status
+  const checkSubscription = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke("check-subscription");
+      
+      if (error) {
+        console.error("Error checking subscription:", error);
+        return;
+      }
+      
+      if (data.subscription) {
+        setUser((prev) => 
+          prev ? { ...prev, subscription: data.subscription.planType } : null
+        );
+      }
+    } catch (error) {
+      console.error("Error checking subscription:", error);
+    }
+  };
+
   useEffect(() => {
     // Check if user is stored in localStorage
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      const parsedUser = JSON.parse(storedUser);
+      setUser(parsedUser);
     }
     setLoading(false);
   }, []);
+
+  useEffect(() => {
+    // Check subscription when user changes
+    if (user) {
+      checkSubscription();
+    }
+  }, [user?.id]);
 
   const login = (email: string, password: string) => {
     setLoading(true);
@@ -52,6 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           email: "superadmin@nomdomain.fr",
           name: "Super Admin",
           role: "superadmin" as const,
+          subscription: "premium" as const,
         };
         setUser(superadminUser);
         localStorage.setItem("user", JSON.stringify(superadminUser));
@@ -63,6 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           email,
           name: email.split("@")[0],
           role: "user" as const,
+          subscription: "trial" as const,
         };
         setUser(regularUser);
         localStorage.setItem("user", JSON.stringify(regularUser));
@@ -86,6 +121,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login,
     logout,
     isAuthenticated: !!user,
+    checkSubscription,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -178,7 +177,7 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {!user?.role && (
+      {!user?.subscription || user?.subscription === "trial" ? (
         <Alert className="bg-primary/5 border-primary/20">
           <Sparkles className="h-4 w-4 text-primary" />
           <AlertTitle>Période d'essai</AlertTitle>
@@ -193,6 +192,14 @@ const Dashboard: React.FC = () => {
             >
               Voir les forfaits
             </Button>
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <Alert className="bg-green-50 border-green-200">
+          <CheckCircle className="h-4 w-4 text-green-500" />
+          <AlertTitle>Abonnement {user.subscription === "premium" ? "Premium" : "Standard"} actif</AlertTitle>
+          <AlertDescription>
+            Vous bénéficiez de toutes les fonctionnalités de votre forfait {user.subscription === "premium" ? "Premium" : "Standard"}.
           </AlertDescription>
         </Alert>
       )}
