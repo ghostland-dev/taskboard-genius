@@ -22,10 +22,16 @@ export const useUserProfile = () => {
         return null;
       }
 
+      // Ensure the role value conforms to the UserProfile type
+      const validatedRole = (data.role === 'user' || data.role === 'admin' || data.role === 'superadmin') 
+        ? data.role as "user" | "admin" | "superadmin" 
+        : "user"; // Default to 'user' if value is not one of the expected values
+
       return {
         ...data,
         email: userSession.user.email,
-      };
+        role: validatedRole
+      } as UserProfile;
     } catch (error) {
       console.error("Erreur loadUserProfile:", error);
       return null;
