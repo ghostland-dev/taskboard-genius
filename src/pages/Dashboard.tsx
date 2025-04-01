@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTasks, Task, TaskCategory } from "@/contexts/TaskContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,7 +11,14 @@ import {
   CalendarDays, 
   Repeat,
   Users,
-  ArrowUpRight
+  ArrowUpRight,
+  Sparkles,
+  BarChart3,
+  Activity,
+  ChevronRight,
+  PlusCircle,
+  Calendar,
+  CheckCircle2
 } from "lucide-react";
 import { formatDistance } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -27,6 +34,7 @@ import {
 } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -107,14 +115,45 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  // For the demo: mock analytics data
+  const categoryColors = {
+    health: "bg-blue-500",
+    work: "bg-purple-500",
+    school: "bg-yellow-500",
+    legal: "bg-gray-500",
+    personal: "bg-green-500",
+    other: "bg-slate-500"
+  };
+
+  // User welcome greeting based on time of day
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    
+    if (hour < 12) {
+      return "Bonjour";
+    } else if (hour < 18) {
+      return "Bon après-midi";
+    } else {
+      return "Bonsoir";
+    }
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
         <div>
-          <h1 className="text-3xl font-bold gradient-heading">Tableau de bord</h1>
-          <p className="text-muted-foreground mt-1">
-            Bienvenue {user?.name || ""}. Voici la vue d'ensemble de vos tâches et activités
-          </p>
+          <div className="flex items-center space-x-3">
+            <Avatar className="h-12 w-12 border-2 border-primary/20">
+              <AvatarImage src="" alt={user?.name} />
+              <AvatarFallback className="bg-primary/10 text-primary font-medium">{user?.name?.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <div>
+              <h1 className="text-3xl font-bold gradient-heading">{getGreeting()}, {user?.name}</h1>
+              <p className="text-muted-foreground mt-1">
+                Voici la vue d'ensemble de vos tâches et activités
+              </p>
+            </div>
+          </div>
         </div>
         
         <div className="flex items-center space-x-2 mt-4 sm:mt-0">
@@ -131,49 +170,62 @@ const Dashboard: React.FC = () => {
           
           <Button 
             onClick={() => navigate("/tasks")}
-            className="bg-brand-500 hover:bg-brand-600"
+            className="bg-primary hover:bg-primary/90"
           >
-            <ArrowUpRight className="mr-1 h-4 w-4" />
-            Voir toutes les tâches
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Nouvelle tâche
           </Button>
         </div>
       </div>
 
       {!user?.role && (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
+        <Alert className="bg-primary/5 border-primary/20">
+          <Sparkles className="h-4 w-4 text-primary" />
           <AlertTitle>Période d'essai</AlertTitle>
-          <AlertDescription>
-            Vous êtes actuellement en période d'essai. Pour débloquer toutes les fonctionnalités, 
-            passez à un abonnement payant dans les paramètres.
+          <AlertDescription className="flex justify-between items-center">
+            <span>Vous êtes actuellement en période d'essai. Pour débloquer toutes les fonctionnalités, 
+              passez à un abonnement payant.</span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="ml-2 border-primary text-primary hover:bg-primary/10"
+              onClick={() => navigate('/settings')}
+            >
+              Voir les forfaits
+            </Button>
           </AlertDescription>
         </Alert>
       )}
 
+      {/* Stats overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
+        <Card className="border-none shadow-md">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-muted-foreground text-sm">Tâches totales</p>
                 <p className="text-3xl font-bold">{totalTasks}</p>
               </div>
-              <div className="bg-brand-100 p-3 rounded-full">
-                <CalendarDays className="text-brand-600" />
+              <div className="bg-primary/10 p-3 rounded-full">
+                <CalendarDays className="text-primary" />
               </div>
+            </div>
+            <div className="mt-4 flex justify-between items-center text-xs text-muted-foreground">
+              <span>À faire: {pendingTasks}</span>
+              <span>En cours: {inProgressTasks}</span>
+              <span>Terminées: {completedTasks}</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-none shadow-md">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-muted-foreground text-sm">Tâches terminées</p>
-                <p className="text-3xl font-bold">{completedTasks}</p>
+                <p className="text-muted-foreground text-sm">Taux de complétion</p>
+                <p className="text-3xl font-bold">{completionRate}%</p>
                 <div className="mt-2">
                   <Progress value={completionRate} className="h-2" />
-                  <span className="text-xs text-muted-foreground">{completionRate}% complétés</span>
                 </div>
               </div>
               <div className="bg-green-100 p-3 rounded-full">
@@ -183,12 +235,16 @@ const Dashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-none shadow-md">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-muted-foreground text-sm">En cours</p>
                 <p className="text-3xl font-bold">{inProgressTasks}</p>
+                <div className="mt-2 text-sm text-muted-foreground flex items-center">
+                  <Activity className="h-4 w-4 mr-1" />
+                  <span>{inProgressTasks ? Math.round((inProgressTasks / totalTasks) * 100) : 0}% de vos tâches</span>
+                </div>
               </div>
               <div className="bg-blue-100 p-3 rounded-full">
                 <Clock className="text-blue-600" />
@@ -197,12 +253,15 @@ const Dashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-none shadow-md">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-muted-foreground text-sm">Échéances proches</p>
                 <p className="text-3xl font-bold">{dueSoonTasks.length}</p>
+                <div className="mt-2 text-sm text-muted-foreground">
+                  Dans les 3 prochains jours
+                </div>
               </div>
               <div className="bg-orange-100 p-3 rounded-full">
                 <AlertCircle className="text-orange-600" />
@@ -213,157 +272,233 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Tâches prioritaires</CardTitle>
-            <CardDescription>Les tâches à traiter en urgence</CardDescription>
+        <Card className="lg:col-span-2 border-none shadow-md">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <div>
+              <CardTitle>Tâches prioritaires</CardTitle>
+              <CardDescription>Les tâches à traiter en urgence</CardDescription>
+            </div>
+            <Button 
+              variant="ghost" 
+              className="text-primary"
+              onClick={() => navigate("/tasks")}
+            >
+              Voir tout
+              <ChevronRight className="ml-1 h-4 w-4" />
+            </Button>
           </CardHeader>
           <CardContent>
             {highPriorityTasks.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {highPriorityTasks.slice(0, 5).map((task) => (
                   <div
                     key={task.id}
-                    className="flex items-center justify-between p-3 border rounded-lg"
+                    className="flex items-center justify-between p-3 border border-slate-100 rounded-lg hover:bg-slate-50 transition-colors"
                   >
-                    <div>
-                      <h4 className="font-medium">{task.title}</h4>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="outline" className={`bg-opacity-20 ${
-                          task.category === "health" ? "bg-red-100 text-red-700 border-red-200" :
-                          task.category === "work" ? "bg-blue-100 text-blue-700 border-blue-200" :
-                          task.category === "school" ? "bg-yellow-100 text-yellow-700 border-yellow-200" :
-                          task.category === "legal" ? "bg-purple-100 text-purple-700 border-purple-200" :
-                          task.category === "personal" ? "bg-green-100 text-green-700 border-green-200" :
-                          "bg-gray-100 text-gray-700 border-gray-200"
-                        }`}>
-                          {getCategoryName(task.category)}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">
-                          {task.dueDate
-                            ? `Échéance: ${formatDistance(new Date(task.dueDate), new Date(), {
-                                addSuffix: true,
-                                locale: fr,
-                              })}`
-                            : "Sans échéance"}
-                        </span>
-                        {task.repeats !== "none" && (
-                          <span className="flex items-center text-xs text-brand-600">
-                            <Repeat size={12} className="mr-1" />
-                            {task.repeats === "daily" 
-                              ? "Quotidien" 
-                              : task.repeats === "weekly"
-                              ? "Hebdomadaire"
-                              : task.repeats === "monthly"
-                              ? "Mensuel"
-                              : "Annuel"
-                            }
+                    <div className="flex items-start space-x-3">
+                      <div className="mt-1">
+                        <CheckCircle2 
+                          size={20} 
+                          className="text-slate-300 hover:text-green-500 cursor-pointer transition-colors" 
+                        />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-slate-900">{task.title}</h4>
+                        <div className="flex items-center flex-wrap gap-2 mt-1">
+                          <Badge variant="outline" className={`
+                            ${task.category === "health" ? "bg-blue-50 text-blue-700 border-blue-200" :
+                            task.category === "work" ? "bg-purple-50 text-purple-700 border-purple-200" :
+                            task.category === "school" ? "bg-yellow-50 text-yellow-700 border-yellow-200" :
+                            task.category === "legal" ? "bg-gray-50 text-gray-700 border-gray-200" :
+                            task.category === "personal" ? "bg-green-50 text-green-700 border-green-200" :
+                            "bg-slate-50 text-slate-700 border-slate-200"
+                          }`}>
+                            {getCategoryName(task.category)}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {task.dueDate
+                              ? `Échéance: ${formatDistance(new Date(task.dueDate), new Date(), {
+                                  addSuffix: true,
+                                  locale: fr,
+                                })}`
+                              : "Sans échéance"}
                           </span>
-                        )}
+                          {task.repeats !== "none" && (
+                            <span className="flex items-center text-xs text-primary">
+                              <Repeat size={12} className="mr-1" />
+                              {task.repeats === "daily" 
+                                ? "Quotidien" 
+                                : task.repeats === "weekly"
+                                ? "Hebdomadaire"
+                                : task.repeats === "monthly"
+                                ? "Mensuel"
+                                : "Annuel"
+                              }
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    <Badge className="bg-red-500">Haute priorité</Badge>
+                    <Badge className="bg-red-500 hover:bg-red-600">Haute priorité</Badge>
                   </div>
                 ))}
                 {highPriorityTasks.length > 5 && (
-                  <Button 
-                    variant="link" 
-                    className="w-full" 
-                    onClick={() => navigate("/tasks")}
-                  >
-                    Voir toutes les tâches prioritaires ({highPriorityTasks.length})
-                  </Button>
+                  <div className="text-center pt-2">
+                    <Button 
+                      variant="ghost" 
+                      className="text-primary"
+                      onClick={() => navigate("/tasks")}
+                    >
+                      Voir {highPriorityTasks.length - 5} tâches supplémentaires
+                      <ChevronRight className="ml-1 h-4 w-4" />
+                    </Button>
+                  </div>
                 )}
               </div>
             ) : (
-              <p className="text-muted-foreground">Aucune tâche prioritaire pour le moment.</p>
+              <div className="text-center py-8 flex flex-col items-center justify-center h-40">
+                <CheckCircle className="h-10 w-10 text-slate-200 mb-4" />
+                <p className="text-muted-foreground font-medium">Aucune tâche prioritaire pour le moment</p>
+                <p className="text-sm text-muted-foreground">Vous êtes à jour avec vos tâches importantes</p>
+              </div>
             )}
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Tâches récurrentes</CardTitle>
-            <CardDescription>Activités régulières planifiées</CardDescription>
+        <Card className="border-none shadow-md">
+          <CardHeader className="pb-2">
+            <CardTitle>Planning</CardTitle>
+            <CardDescription className="flex justify-between items-center">
+              <span>Prochaines échéances</span>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-primary p-0 h-auto"
+                onClick={() => navigate("/calendar")}
+              >
+                Calendrier
+                <Calendar className="ml-1 h-4 w-4" />
+              </Button>
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {recurringTasks.length > 0 ? (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="flex flex-col items-center justify-center bg-blue-50 p-3 rounded-lg">
-                      <span className="text-2xl font-bold text-blue-600">{dailyTasks}</span>
-                      <span className="text-sm text-muted-foreground">Quotidiennes</span>
-                    </div>
-                    <div className="flex flex-col items-center justify-center bg-green-50 p-3 rounded-lg">
-                      <span className="text-2xl font-bold text-green-600">{weeklyTasks}</span>
-                      <span className="text-sm text-muted-foreground">Hebdomadaires</span>
-                    </div>
-                    <div className="flex flex-col items-center justify-center bg-yellow-50 p-3 rounded-lg">
-                      <span className="text-2xl font-bold text-yellow-600">{monthlyTasks}</span>
-                      <span className="text-sm text-muted-foreground">Mensuelles</span>
-                    </div>
-                    <div className="flex flex-col items-center justify-center bg-purple-50 p-3 rounded-lg">
-                      <span className="text-2xl font-bold text-purple-600">{yearlyTasks}</span>
-                      <span className="text-sm text-muted-foreground">Annuelles</span>
+            {dueSoonTasks.length > 0 ? (
+              <div className="space-y-4">
+                {dueSoonTasks.slice(0, 3).map((task) => (
+                  <div key={task.id} className="border-l-4 border-primary pl-3 py-1">
+                    <p className="font-medium">{task.title}</p>
+                    <div className="text-sm text-muted-foreground flex items-center justify-between">
+                      <span>
+                        {task.dueDate && formatDistance(new Date(task.dueDate), new Date(), {
+                          addSuffix: true,
+                          locale: fr,
+                        })}
+                      </span>
+                      <Badge
+                        variant="outline"
+                        className={`
+                          ${task.priority === "high" 
+                            ? "bg-red-50 text-red-700 border-red-200" 
+                            : task.priority === "medium"
+                            ? "bg-orange-50 text-orange-700 border-orange-200"
+                            : "bg-green-50 text-green-700 border-green-200"
+                          }
+                        `}
+                      >
+                        {task.priority === "high" 
+                          ? "Haute" 
+                          : task.priority === "medium" 
+                          ? "Moyenne" 
+                          : "Basse"}
+                      </Badge>
                     </div>
                   </div>
-                  
-                  <div className="pt-2">
-                    <h4 className="text-sm font-medium mb-2">Prochaines tâches récurrentes</h4>
-                    {recurringTasks.slice(0, 3).map(task => (
-                      <div key={task.id} className="flex items-center justify-between mb-2">
-                        <div className="flex-1">
-                          <p className="font-medium truncate text-sm">{task.title}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {task.repeats === "daily" 
-                              ? "Tous les jours" 
-                              : task.repeats === "weekly"
-                              ? "Toutes les semaines"
-                              : task.repeats === "monthly"
-                              ? "Tous les mois"
-                              : "Tous les ans"
-                            }
-                          </p>
-                        </div>
-                        <span
-                          className={`h-2 w-2 rounded-full ${
-                            task.status === "completed"
-                              ? "bg-green-500"
-                              : task.status === "inprogress"
-                              ? "bg-blue-500"
-                              : "bg-gray-500"
-                          }`}
-                        ></span>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Repeat className="mx-auto h-12 w-12 opacity-20 mb-2" />
-                  <p>Aucune tâche récurrente</p>
-                  <p className="text-sm">Créez des tâches avec répétition pour les voir apparaître ici</p>
+                ))}
+                
+                <div className="pt-2 text-center">
+                  <Button 
+                    variant="outline"
+                    className="w-full text-primary border-primary/30 hover:bg-primary/5"
+                    onClick={() => navigate("/calendar")}
+                  >
+                    Voir toutes les échéances
+                    <ChevronRight className="ml-1 h-4 w-4" />
+                  </Button>
                 </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center text-center py-8 h-40">
+                <Calendar className="h-10 w-10 text-slate-200 mb-4" />
+                <p className="text-muted-foreground font-medium">Aucune échéance proche</p>
+                <p className="text-sm text-muted-foreground">Profitez de ce moment de calme</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Répartition par catégorie</CardTitle>
-                <CardDescription>Vue d'ensemble de vos tâches par type</CardDescription>
-              </div>
-              <Badge variant="outline">{timeRange === "today" ? "Aujourd'hui" : timeRange === "week" ? "7 derniers jours" : "30 derniers jours"}</Badge>
+      {/* Analytics section */}
+      <Card className="border-none shadow-md">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center">
+                <BarChart3 className="mr-2 h-5 w-5 text-primary" />
+                Répartition par catégorie
+              </CardTitle>
+              <CardDescription>Vue d'ensemble de vos tâches par type</CardDescription>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Badge variant="outline">{timeRange === "today" ? "Aujourd'hui" : timeRange === "week" ? "7 derniers jours" : "30 derniers jours"}</Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+            {/* Categories chart */}
+            <div className="col-span-3 h-52 flex items-center justify-center">
+              <div className="relative w-full h-full flex items-center justify-center">
+                <div className="w-40 h-40 rounded-full border-8 border-slate-100 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold">{totalTasks}</div>
+                    <div className="text-sm text-muted-foreground">Total des tâches</div>
+                  </div>
+                </div>
+                {Object.entries(tasksByCategory).length > 0 ? (
+                  <>
+                    {Object.entries(tasksByCategory).map(([category, tasks], index) => {
+                      const percentage = Math.round((tasks.length / totalTasks) * 100);
+                      const rotation = index * (360 / Object.entries(tasksByCategory).length);
+                      return (
+                        <div
+                          key={category}
+                          className={`absolute w-3 h-3 rounded-full ${(categoryColors as any)[category]} transform -translate-x-1/2 -translate-y-1/2`}
+                          style={{
+                            top: `calc(50% + ${Math.sin((rotation * Math.PI) / 180) * 80}px)`,
+                            left: `calc(50% + ${Math.cos((rotation * Math.PI) / 180) * 80}px)`,
+                          }}
+                        >
+                          <div 
+                            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 whitespace-nowrap text-xs font-medium"
+                            style={{
+                              marginLeft: `${Math.cos((rotation * Math.PI) / 180) * 25}px`,
+                              marginTop: `${Math.sin((rotation * Math.PI) / 180) * 25}px`,
+                            }}
+                          >
+                            {getCategoryName(category as TaskCategory)} ({percentage}%)
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </>
+                ) : (
+                  <div className="text-center text-muted-foreground">
+                    <p>Aucune donnée disponible</p>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* Categories stats */}
+            <div className="col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
               {Object.entries(tasksByCategory).map(([category, categoryTasks]) => {
                 const categoryCompletionRate = categoryTasks.length 
                   ? Math.round((categoryTasks.filter(t => t.status === "completed").length / categoryTasks.length) * 100)
@@ -372,10 +507,13 @@ const Dashboard: React.FC = () => {
                 return (
                   <div 
                     key={category}
-                    className="border rounded-lg p-4 flex flex-col" 
+                    className="border rounded-lg p-4 flex flex-col hover:border-primary/20 transition-colors" 
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium">{getCategoryName(category as TaskCategory)}</h3>
+                      <h3 className="font-medium flex items-center">
+                        <div className={`w-3 h-3 rounded-full mr-2 ${(categoryColors as any)[category]}`}></div>
+                        {getCategoryName(category as TaskCategory)}
+                      </h3>
                       <span className="text-sm text-muted-foreground">{categoryTasks.length}</span>
                     </div>
                     
@@ -393,68 +531,28 @@ const Dashboard: React.FC = () => {
                 );
               })}
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Activités récentes</CardTitle>
-            <CardDescription>Dernières tâches créées ou modifiées</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentTasks.map((task) => (
-                <div key={task.id} className="flex items-center justify-between border-b pb-2 last:border-0">
-                  <div className="flex-1">
-                    <p className="font-medium truncate">{task.title}</p>
-                    <div className="flex items-center gap-2">
-                      <p className="text-xs text-muted-foreground">
-                        {formatDistance(new Date(task.createdAt), new Date(), {
-                          addSuffix: true,
-                          locale: fr,
-                        })}
-                      </p>
-                      <Badge variant="outline" className="text-xs">
-                        {getCategoryName(task.category)}
-                      </Badge>
-                    </div>
-                  </div>
-                  <span
-                    className={`h-3 w-3 rounded-full ${
-                      task.status === "completed"
-                        ? "bg-green-500"
-                        : task.status === "inprogress"
-                        ? "bg-blue-500"
-                        : "bg-gray-500"
-                    }`}
-                  ></span>
-                </div>
-              ))}
-              {recentTasks.length === 0 && (
-                <p className="text-muted-foreground text-center py-4">
-                  Aucune activité récente
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {user?.role === "superadmin" && (
-        <Card>
+        <Card className="border-none shadow-md">
           <CardHeader>
-            <CardTitle>Administration</CardTitle>
+            <CardTitle className="flex items-center">
+              <Users className="mr-2 h-5 w-5 text-primary" />
+              Administration
+            </CardTitle>
             <CardDescription>Statistiques globales et gestion des utilisateurs</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-lg font-medium">Utilisateurs du système</p>
+                <p className="text-lg font-medium">Gérer les utilisateurs</p>
                 <p className="text-muted-foreground">En tant que super admin, vous pouvez gérer tous les utilisateurs</p>
               </div>
               <Button 
                 onClick={() => navigate("/users")}
-                className="bg-brand-500 hover:bg-brand-600"
+                className="bg-primary hover:bg-primary/90"
               >
                 <Users className="mr-2 h-4 w-4" />
                 Gérer les utilisateurs

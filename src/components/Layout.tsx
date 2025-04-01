@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Navigate, Outlet } from "react-router-dom";
 import { Toaster } from "sonner";
 import { cn } from "@/lib/utils";
-import { Bell } from "lucide-react";
+import { Bell, Search, Settings } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,9 +17,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
 
 const Layout: React.FC = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   if (!isAuthenticated) {
@@ -33,8 +34,16 @@ const Layout: React.FC = () => {
       
       <div className="flex flex-col flex-1">
         {/* Header */}
-        <header className="h-16 border-b flex items-center justify-between px-6 transition-all duration-200">
-          <div></div>
+        <header className="h-16 border-b flex items-center justify-between px-6 bg-white shadow-sm z-10 transition-all duration-200">
+          <div className="flex-1 max-w-md">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input 
+                placeholder="Rechercher..." 
+                className="pl-9 bg-slate-50 border-none focus-visible:ring-primary/20"
+              />
+            </div>
+          </div>
           <div className="flex items-center space-x-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -48,23 +57,27 @@ const Layout: React.FC = () => {
               <DropdownMenuContent align="end" className="w-80">
                 <DropdownMenuLabel>Notifications</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer">
+                <DropdownMenuItem className="cursor-pointer py-3">
                   <div className="flex flex-col">
                     <span className="font-medium">Nouvelle tâche assignée</span>
                     <span className="text-xs text-muted-foreground">Il y a 5 minutes</span>
                   </div>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer">
+                <DropdownMenuItem className="cursor-pointer py-3">
                   <div className="flex flex-col">
                     <span className="font-medium">Rappel: Tâche bientôt due</span>
                     <span className="text-xs text-muted-foreground">Il y a 30 minutes</span>
                   </div>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer">
+                <DropdownMenuItem className="cursor-pointer py-3">
                   <div className="flex flex-col">
                     <span className="font-medium">Mise à jour système</span>
                     <span className="text-xs text-muted-foreground">Il y a 2 heures</span>
                   </div>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="cursor-pointer text-center text-primary">
+                  Voir toutes les notifications
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -72,20 +85,29 @@ const Layout: React.FC = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center space-x-2">
-                  <Avatar className="h-8 w-8">
+                  <Avatar className="h-8 w-8 border border-slate-200">
                     <AvatarImage src="" alt={user?.name} />
-                    <AvatarFallback>{user?.name.charAt(0)}</AvatarFallback>
+                    <AvatarFallback className="bg-primary/10 text-primary">{user?.name.charAt(0)}</AvatarFallback>
                   </Avatar>
-                  <span className="font-medium text-sm">{user?.name}</span>
+                  <span className="font-medium text-sm hidden md:inline-block">{user?.name}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer">Profil</DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer">Paramètres</DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer">
+                  <div className="flex flex-col">
+                    <span className="font-medium">{user?.name}</span>
+                    <span className="text-xs text-muted-foreground">{user?.email}</span>
+                  </div>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer text-destructive">
+                <DropdownMenuItem className="cursor-pointer flex items-center">
+                  <Settings className="mr-2 h-4 w-4" />
+                  Paramètres
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer text-destructive flex items-center" onClick={logout}>
+                  <LogOut className="mr-2 h-4 w-4" />
                   Déconnexion
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -96,7 +118,7 @@ const Layout: React.FC = () => {
         {/* Main content */}
         <main 
           className={cn(
-            "flex-1 p-4 md:p-6 overflow-y-auto transition-all duration-200",
+            "flex-1 p-4 md:p-6 overflow-y-auto transition-all duration-200 bg-slate-50",
             sidebarCollapsed ? "ml-[70px]" : "ml-[240px]"
           )}
         >

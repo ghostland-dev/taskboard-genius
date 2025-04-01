@@ -15,6 +15,7 @@ import Settings from "./pages/Settings";
 import Users from "./pages/Users";
 import Analytics from "./pages/Analytics";
 import NotFound from "./pages/NotFound";
+import LandingPage from "./pages/LandingPage";
 
 const queryClient = new QueryClient();
 
@@ -27,9 +28,9 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
+              <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<Login />} />
               <Route path="/" element={<Layout />}>
-                <Route index element={<Dashboard />} />
                 <Route path="dashboard" element={<Dashboard />} />
                 <Route path="tasks" element={<Tasks />} />
                 <Route path="calendar" element={<Calendar />} />
