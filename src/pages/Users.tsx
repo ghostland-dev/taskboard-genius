@@ -20,7 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MoreVertical, Plus, Users, UserPlus, AlertTriangle } from "lucide-react";
+import { MoreVertical, Plus, User, UserPlus, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
 
@@ -78,7 +78,7 @@ const mockUsers = [
   }
 ];
 
-const Users: React.FC = () => {
+const UsersPage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -135,7 +135,7 @@ const Users: React.FC = () => {
                 <p className="text-3xl font-bold">{mockUsers.length}</p>
               </div>
               <div className="bg-brand-100 p-3 rounded-full">
-                <Users className="text-brand-600" />
+                <User className="text-brand-600" />
               </div>
             </div>
           </CardContent>
@@ -148,7 +148,7 @@ const Users: React.FC = () => {
                 <p className="text-3xl font-bold">{mockUsers.filter(u => u.status === "active").length}</p>
               </div>
               <div className="bg-green-100 p-3 rounded-full">
-                <Users className="text-green-600" />
+                <User className="text-green-600" />
               </div>
             </div>
           </CardContent>
@@ -161,7 +161,7 @@ const Users: React.FC = () => {
                 <p className="text-3xl font-bold">{mockUsers.filter(u => u.subscription === "premium").length}</p>
               </div>
               <div className="bg-yellow-100 p-3 rounded-full">
-                <Users className="text-yellow-600" />
+                <User className="text-yellow-600" />
               </div>
             </div>
           </CardContent>
@@ -263,4 +263,4 @@ const Users: React.FC = () => {
   );
 };
 
-export default Users;
+export default UsersPage;
