@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { UserStats } from "@/types/user";
+import { toast } from "sonner";
 
 export const useUserAnalyticsData = () => {
   const [timeRange, setTimeRange] = useState<string>("30");
@@ -20,9 +21,15 @@ export const useUserAnalyticsData = () => {
       setIsLoading(true);
       try {
         // Fetch from Supabase
-        const { data: profiles } = await supabase
+        const { data: profiles, error } = await supabase
           .from("profiles")
           .select("*");
+          
+        if (error) {
+          console.error("Error fetching profiles:", error);
+          toast.error(`Erreur lors du chargement des utilisateurs: ${error.message}`);
+          return;
+        }
           
         if (profiles) {
           const currentDate = new Date();
@@ -47,15 +54,16 @@ export const useUserAnalyticsData = () => {
             newUsersThisMonth: newUsers
           });
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching analytics data:", error);
+        toast.error(`Erreur lors du chargement des données: ${error.message}`);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchAnalyticsData();
-  }, []);
+  }, [timeRange]); // Added timeRange as dependency to refresh data when it changes
 
   return {
     timeRange,

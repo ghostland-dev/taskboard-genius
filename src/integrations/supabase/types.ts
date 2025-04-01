@@ -856,6 +856,12 @@ export type Database = {
         }
         Returns: boolean
       }
+      get_user_role: {
+        Args: {
+          user_id: string
+        }
+        Returns: string
+      }
       promote_to_superadmin: {
         Args: {
           user_email: string
