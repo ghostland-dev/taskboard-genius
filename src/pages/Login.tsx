@@ -8,6 +8,7 @@ import TestCredentials from "@/components/TestCredentials";
 import AuthHeader from "@/components/auth/AuthHeader";
 import LoginForm from "@/components/auth/LoginForm";
 import SignupForm from "@/components/auth/SignupForm";
+import FirstLaunchInitializer from "@/components/FirstLaunchInitializer";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -26,6 +27,9 @@ const Login: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-purple-50 to-white p-4">
+      {/* Initialize test users on first launch */}
+      <FirstLaunchInitializer />
+      
       <AuthHeader />
       
       <TestCredentials />
