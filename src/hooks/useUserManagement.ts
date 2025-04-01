@@ -24,6 +24,7 @@ export const useUserManagement = () => {
         .order("created_at", { ascending: false });
 
       if (error) {
+        console.error("Error fetching users:", error);
         toast.error(`Erreur lors du chargement des utilisateurs: ${error.message}`);
         return;
       }
@@ -31,6 +32,7 @@ export const useUserManagement = () => {
       // Cast the data to our User type
       setUsers(data as User[]);
     } catch (err: any) {
+      console.error("Error in fetchUsers:", err);
       toast.error(`Erreur: ${err.message}`);
     } finally {
       setLoading(false);
@@ -54,6 +56,7 @@ export const useUserManagement = () => {
           .eq("id", selectedUser.id);
 
         if (error) {
+          console.error("Error updating user role:", error);
           toast.error(`Erreur lors de la mise à jour du rôle: ${error.message}`);
           return;
         }
@@ -63,6 +66,7 @@ export const useUserManagement = () => {
       setDialogOpen(false);
       fetchUsers(); // Rafraîchir la liste des utilisateurs
     } catch (err: any) {
+      console.error("Error in handleUpdateUser:", err);
       toast.error(`Erreur: ${err.message}`);
     }
   };

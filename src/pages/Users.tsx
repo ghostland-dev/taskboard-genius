@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -12,9 +12,29 @@ import { useSubscription } from "@/hooks/useSubscription";
 const UsersPage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { getAllSubscriptions } = useSubscription();
   
   // Si l'utilisateur n'est pas superadmin, rediriger ou afficher un message
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Alert className="max-w-lg">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Accès non autorisé</AlertTitle>
+          <AlertDescription>
+            Vous devez vous connecter pour accéder à cette page.
+          </AlertDescription>
+          <Button 
+            className="mt-4" 
+            variant="outline" 
+            onClick={() => navigate("/login")}
+          >
+            Se connecter
+          </Button>
+        </Alert>
+      </div>
+    );
+  }
+  
   if (user?.role !== "superadmin") {
     return (
       <div className="flex items-center justify-center h-full">

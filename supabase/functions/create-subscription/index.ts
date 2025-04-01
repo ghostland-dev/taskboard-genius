@@ -36,6 +36,7 @@ serve(async (req) => {
     // Get authorization header
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
+      console.error("Missing Authorization header");
       return new Response(
         JSON.stringify({ error: "Non autorisé - En-tête d'autorisation manquant" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
