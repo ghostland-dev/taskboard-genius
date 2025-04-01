@@ -11,11 +11,13 @@ import { UserStats } from "@/types/user";
 interface UserAnalyticsTabsProps {
   timeRange: number;
   analyticsData: UserStats;
+  isLoading?: boolean;
 }
 
 const UserAnalyticsTabs: React.FC<UserAnalyticsTabsProps> = ({ 
   timeRange, 
-  analyticsData 
+  analyticsData,
+  isLoading 
 }) => {
   return (
     <Tabs defaultValue="growth" className="w-full">

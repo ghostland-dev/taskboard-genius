@@ -24,12 +24,13 @@ const UserAnalytics: React.FC = () => {
       />
       
       <UserAnalyticsCards 
-        analyticsData={analyticsData} 
+        data={analyticsData} 
         isLoading={isLoading} 
       />
       
       <UserAnalyticsTabs 
-        timeRange={timeRange}
+        timeRange={parseInt(timeRange)}
+        analyticsData={analyticsData}
         isLoading={isLoading} 
       />
     </div>
