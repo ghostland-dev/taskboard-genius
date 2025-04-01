@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +15,8 @@ type SupabaseProfileRow = {
   subscription_id?: string;
   subscription_status?: string;
   subscription_period_end?: string;
+  created_at?: string;
+  updated_at?: string;
 };
 
 // Utilisateur enrichi avec email de la session

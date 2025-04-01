@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, LogIn, UserPlus, Mail, Lock, User } from "lucide-react";
+import TestCredentials from "@/components/TestCredentials";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -62,6 +63,8 @@ const Login: React.FC = () => {
         <h1 className="text-4xl font-bold gradient-heading mb-2">Task Manager</h1>
         <p className="text-muted-foreground">Gérez vos tâches efficacement</p>
       </div>
+      
+      <TestCredentials />
       
       <Card className="w-full max-w-md shadow-lg border-0 animate-fade-in">
         <Tabs defaultValue="login" value={activeTab} onValueChange={setActiveTab}>
