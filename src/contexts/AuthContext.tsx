@@ -1,20 +1,26 @@
 
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { Session, User } from "@supabase/supabase-js";
 
-type User = {
+type UserProfile = {
   id: string;
   email: string;
   name: string;
   role: "user" | "admin" | "superadmin";
+  status: "active" | "inactive";
+  subscription: string;
 };
 
 type AuthContextType = {
-  user: User | null;
+  user: UserProfile | null;
   loading: boolean;
-  login: (email: string, password: string) => void;
-  logout: () => void;
+  login: (email: string, password: string) => Promise<void>;
+  signup: (email: string, password: string, name: string) => Promise<void>;
+  logout: () => Promise<void>;
   isAuthenticated: boolean;
+  session: Session | null;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,64 +34,136 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    // Check if user is stored in localStorage
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
-  }, []);
+  // Load user profile data from Supabase
+  const loadUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single();
 
-  const login = (email: string, password: string) => {
-    setLoading(true);
-    
-    // Simulating API call
-    setTimeout(() => {
-      // Mock authentication for demo purposes
-      if (email === "superadmin@nomdomain.fr" && password === "HolySsit++ @!") {
-        const superadminUser = {
-          id: "1",
-          email: "superadmin@nomdomain.fr",
-          name: "Super Admin",
-          role: "superadmin" as const,
-        };
-        setUser(superadminUser);
-        localStorage.setItem("user", JSON.stringify(superadminUser));
-        toast.success("Connexion réussie en tant que Super Admin");
-      } else if (email && password) {
-        // Mock regular user login
-        const regularUser = {
-          id: "2",
-          email,
-          name: email.split("@")[0],
-          role: "user" as const,
-        };
-        setUser(regularUser);
-        localStorage.setItem("user", JSON.stringify(regularUser));
-        toast.success("Connexion réussie");
-      } else {
-        toast.error("Email ou mot de passe incorrect");
+      if (error) {
+        console.error("Error loading user profile:", error);
+        return null;
       }
-      setLoading(false);
-    }, 1000);
+
+      if (data) {
+        return {
+          id: data.id,
+          email: session?.user.email || "",
+          name: data.name,
+          role: data.role as UserProfile["role"],
+          status: data.status as "active" | "inactive",
+          subscription: data.subscription
+        };
+      }
+    } catch (error) {
+      console.error("Error in loadUserProfile:", error);
+    }
+    return null;
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem("user");
-    toast.info("Déconnexion réussie");
+  useEffect(() => {
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, currentSession) => {
+        setSession(currentSession);
+
+        if (currentSession?.user) {
+          const profile = await loadUserProfile(currentSession.user.id);
+          setUser(profile);
+        } else {
+          setUser(null);
+        }
+        
+        setLoading(false);
+      }
+    );
+
+    // Check current session
+    supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
+      setSession(currentSession);
+
+      if (currentSession?.user) {
+        const profile = await loadUserProfile(currentSession.user.id);
+        setUser(profile);
+      }
+      
+      setLoading(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const login = async (email: string, password: string) => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Connexion réussie");
+      }
+    } catch (error) {
+      toast.error("Une erreur est survenue lors de la connexion");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signup = async (email: string, password: string, name: string) => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          data: {
+            name
+          }
+        }
+      });
+      
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Compte créé avec succès. Vérifiez votre email pour confirmer.");
+      }
+    } catch (error) {
+      toast.error("Une erreur est survenue lors de l'inscription");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.info("Déconnexion réussie");
+    } catch (error) {
+      toast.error("Une erreur est survenue lors de la déconnexion");
+      console.error(error);
+    }
   };
 
   const value = {
     user,
     loading,
     login,
+    signup,
     logout,
     isAuthenticated: !!user,
+    session
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
