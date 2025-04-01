@@ -6,6 +6,13 @@ import { UserProfile } from "@/types/auth";
 export const useUserProfile = () => {
   const loadUserProfile = async (userId: string, userSession: Session | null): Promise<UserProfile | null> => {
     try {
+      // First check if we have a valid session
+      if (!userSession?.user?.email) {
+        console.warn("Email manquant dans la session");
+        return null;
+      }
+
+      // Attempt to fetch profile data
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -14,12 +21,14 @@ export const useUserProfile = () => {
 
       if (error) {
         console.error("Erreur chargement profil:", error);
-        return null;
-      }
-
-      if (!userSession?.user?.email) {
-        console.warn("Email manquant dans la session");
-        return null;
+        
+        // Return a minimal profile when the table might not exist yet
+        return {
+          id: userId,
+          email: userSession.user.email,
+          name: userSession.user.email.split('@')[0],
+          role: "user" as "user" | "admin" | "superadmin"
+        };
       }
 
       // Ensure the role value conforms to the UserProfile type
@@ -34,6 +43,17 @@ export const useUserProfile = () => {
       } as UserProfile;
     } catch (error) {
       console.error("Erreur loadUserProfile:", error);
+      
+      // In case of error, return minimal profile
+      if (userSession?.user?.email) {
+        return {
+          id: userId,
+          email: userSession.user.email,
+          name: userSession.user.email.split('@')[0],
+          role: "user" as "user" | "admin" | "superadmin"
+        };
+      }
+      
       return null;
     }
   };

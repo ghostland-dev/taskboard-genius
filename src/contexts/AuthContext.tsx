@@ -7,9 +7,6 @@ import { AuthContextType, UserProfile } from "@/types/auth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { authService } from "@/services/authService";
 
-// Note: La vérification par email est désactivée dans l'application
-// La configuration a été ajoutée dans le service d'authentification
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = (): AuthContextType => {
@@ -26,29 +23,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshUser = async () => {
     if (session?.user) {
-      const profile = await loadUserProfile(session.user.id, session);
-      setUser(profile);
+      try {
+        const profile = await loadUserProfile(session.user.id, session);
+        setUser(profile);
+      } catch (error) {
+        console.error("Error refreshing user profile:", error);
+      }
     }
   };
 
   useEffect(() => {
+    // Set up auth state listener FIRST
     const authListener = supabase.auth.onAuthStateChange(async (_event, currentSession) => {
+      console.log("Auth state changed:", _event, !!currentSession);
       setSession(currentSession);
+      
       if (currentSession?.user) {
-        const profile = await loadUserProfile(currentSession.user.id, currentSession);
-        setUser(profile);
+        try {
+          const profile = await loadUserProfile(currentSession.user.id, currentSession);
+          setUser(profile);
+        } catch (error) {
+          console.error("Error loading user profile on auth change:", error);
+          setUser(null);
+        }
       } else {
         setUser(null);
       }
+      
       setLoading(false);
     }).data.subscription;
 
+    // THEN check for existing session
     supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
+      console.log("Initial session check:", !!currentSession);
       setSession(currentSession);
+      
       if (currentSession?.user) {
-        const profile = await loadUserProfile(currentSession.user.id, currentSession);
-        setUser(profile);
+        try {
+          const profile = await loadUserProfile(currentSession.user.id, currentSession);
+          setUser(profile);
+        } catch (error) {
+          console.error("Error loading initial user profile:", error);
+        }
       }
+      
       setLoading(false);
     });
 

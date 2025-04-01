@@ -30,7 +30,10 @@ const LoginForm: React.FC = () => {
       
       if (result.success) {
         toast.success("Connexion réussie");
-        navigate("/dashboard");
+        // Force navigation to dashboard
+        setTimeout(() => {
+          navigate("/dashboard", { replace: true });
+        }, 300);
       } else {
         setError("Identifiants invalides. Vérifiez que l'email et le mot de passe sont corrects.");
         console.error("Échec de connexion:", result);

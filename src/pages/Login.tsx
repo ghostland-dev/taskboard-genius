@@ -11,18 +11,25 @@ import SignupForm from "@/components/auth/SignupForm";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const [activeTab, setActiveTab] = useState<string>("login");
 
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate("/dashboard");
+    // Only redirect if user is authenticated and loading is complete
+    if (isAuthenticated && !loading) {
+      console.log("User is authenticated, redirecting to dashboard");
+      navigate("/dashboard", { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, loading, navigate]);
 
   const handleSignupSuccess = () => {
     setActiveTab("login");
   };
+
+  // If still loading, show nothing until we know the auth state
+  if (loading) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-purple-50 to-white p-4">
