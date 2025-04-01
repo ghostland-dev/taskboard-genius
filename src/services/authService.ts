@@ -60,10 +60,10 @@ export const authService = {
         return false;
       }
 
+      // Définir les options avec emailConfirm: false pour désactiver la vérification par email
       const options = {
         data: { name: sanitizedName },
         emailRedirectTo: window.location.origin,
-        // Configuration pour désactiver la vérification par email
         emailConfirm: false
       };
 
