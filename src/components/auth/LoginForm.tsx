@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CardContent, CardFooter } from "@/components/ui/card";
-import { Loader2, LogIn, Mail, Lock } from "lucide-react";
+import { Loader2, LogIn, Mail, Lock, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const LoginForm: React.FC = () => {
   const navigate = useNavigate();
@@ -14,16 +16,28 @@ const LoginForm: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
     
     try {
+      console.log("Tentative de connexion avec:", { email, password });
       const result = await login(email, password);
+      console.log("Résultat de la connexion:", result);
+      
       if (result.success) {
+        toast.success("Connexion réussie");
         navigate("/dashboard");
+      } else {
+        setError("Identifiants invalides. Vérifiez que l'email et le mot de passe sont corrects.");
+        console.error("Échec de connexion:", result);
       }
+    } catch (err) {
+      console.error("Erreur lors de la connexion:", err);
+      setError("Une erreur inattendue s'est produite. Veuillez réessayer.");
     } finally {
       setIsLoading(false);
     }
@@ -32,6 +46,13 @@ const LoginForm: React.FC = () => {
   return (
     <form onSubmit={handleLogin}>
       <CardContent className="space-y-4">
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4 mr-2" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <div className="relative">
@@ -67,6 +88,12 @@ const LoginForm: React.FC = () => {
               required
             />
           </div>
+        </div>
+
+        <div className="text-sm text-muted-foreground">
+          <strong>Utilisateurs de test:</strong> user@example.com, admin@example.com, superadmin@example.com 
+          <br />
+          <strong>Mot de passe:</strong> password123
         </div>
       </CardContent>
       

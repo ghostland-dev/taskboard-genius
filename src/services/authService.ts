@@ -12,21 +12,30 @@ export const authService = {
         return { success: false };
       }
 
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log("Tentative de connexion avec l'email:", sanitizedEmail);
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: sanitizedEmail,
         password,
       });
 
       if (error) {
+        console.error("Erreur détaillée:", error);
         toast.error("Identifiants invalides");
+        return { success: false };
+      }
+
+      if (!data.user || !data.session) {
+        console.error("Authentification réussie mais données utilisateur manquantes");
+        toast.error("Erreur lors de la connexion");
         return { success: false };
       }
 
       toast.success("Connexion réussie");
       return { success: true };
     } catch (error) {
+      console.error("Erreur lors de la connexion:", error);
       toast.error("Erreur lors de la connexion");
-      console.error(error);
       return { success: false };
     }
   },

@@ -29,6 +29,12 @@ const FirstLaunchInitializer: React.FC = () => {
         
         console.log("Utilisateurs créés:", data);
         toast.success("Utilisateurs de test créés avec succès");
+        
+        // Force un rechargement de la page après la création des utilisateurs pour s'assurer
+        // que tout est bien initialisé
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
       } catch (error) {
         console.error("Erreur:", error);
         toast.error("Une erreur est survenue");
