@@ -8,11 +8,11 @@ import { AuthProvider } from "./contexts/auth";
 import { TaskProvider } from "./contexts/TaskContext";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
+import Dashboard from "./pages/dashboard"; // Updated import path
 import Tasks from "./pages/Tasks";
 import Calendar from "./pages/Calendar";
 import Settings from "./pages/Settings";
-import Users from "./pages/users"; // Updated import path
+import Users from "./pages/users";
 import Analytics from "./pages/Analytics";
 import NotFound from "./pages/NotFound";
 import Index from "./pages/Index";

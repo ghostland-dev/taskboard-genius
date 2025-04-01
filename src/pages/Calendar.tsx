@@ -1,7 +1,6 @@
-
 import React, { useState } from "react";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { useTasks, Task, TaskCategory, TaskPriority } from "@/contexts/TaskContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { format } from "date-fns";

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { useTasks, Task } from "@/contexts/TaskContext";
 import { Button } from "@/components/ui/button";
 import {
