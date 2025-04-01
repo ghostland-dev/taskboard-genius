@@ -3,12 +3,14 @@ import React, { createContext, useState, useContext, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-type User = {
+export type SubscriptionPlan = "trial" | "standard" | "premium" | "expired";
+
+export type User = {
   id: string;
   email: string;
   name: string;
   role: "user" | "admin" | "superadmin";
-  subscription?: "trial" | "standard" | "premium";
+  subscription?: SubscriptionPlan;
 };
 
 type AuthContextType = {
@@ -18,6 +20,7 @@ type AuthContextType = {
   logout: () => void;
   isAuthenticated: boolean;
   checkSubscription: () => Promise<void>;
+  updateUserProfile: (updates: Partial<User>) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -51,8 +54,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           prev ? { ...prev, subscription: data.subscription.planType } : null
         );
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error checking subscription:", error);
+    }
+  };
+
+  // Fonction pour mettre à jour le profil utilisateur
+  const updateUserProfile = async (updates: Partial<User>) => {
+    if (!user) return;
+
+    try {
+      // Mise à jour du profil dans Supabase
+      const { error } = await supabase
+        .from("profiles")
+        .update(updates)
+        .eq("id", user.id);
+
+      if (error) {
+        toast.error(`Erreur lors de la mise à jour du profil: ${error.message}`);
+        throw error;
+      }
+
+      // Mise à jour de l'état local
+      setUser((prev) => prev ? { ...prev, ...updates } : null);
+      toast.success("Profil mis à jour avec succès");
+    } catch (error: any) {
+      console.error("Error updating profile:", error);
+      throw error;
     }
   };
 
@@ -122,6 +150,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout,
     isAuthenticated: !!user,
     checkSubscription,
+    updateUserProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -4,9 +4,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-type SubscriptionPlan = "standard" | "premium";
+export type SubscriptionPlan = "standard" | "premium" | "trial" | "expired";
 
-interface Subscription {
+export interface Subscription {
   id: string;
   status: string;
   planType: SubscriptionPlan;
@@ -37,7 +37,7 @@ export const useSubscription = () => {
       } else {
         setSubscription(data.subscription);
       }
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message);
       toast.error("Erreur lors de la vérification de l'abonnement");
     } finally {
@@ -75,6 +75,57 @@ export const useSubscription = () => {
     }
   };
 
+  // Fonction pour l'admin pour changer l'abonnement d'un utilisateur
+  const updateUserSubscription = async (userId: string, plan: SubscriptionPlan) => {
+    if (!user || user.role !== "superadmin") {
+      toast.error("Permission refusée");
+      return false;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ subscription: plan })
+        .eq("id", userId);
+
+      if (error) {
+        toast.error(`Erreur: ${error.message}`);
+        return false;
+      }
+
+      toast.success(`Abonnement mis à jour avec succès`);
+      return true;
+    } catch (err: any) {
+      toast.error(`Erreur: ${err.message}`);
+      return false;
+    }
+  };
+
+  // Fonction pour obtenir tous les abonnements (admin seulement)
+  const getAllSubscriptions = async () => {
+    if (!user || user.role !== "superadmin") {
+      toast.error("Permission refusée");
+      return [];
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, name, email, subscription, created_at")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        toast.error(`Erreur: ${error.message}`);
+        return [];
+      }
+
+      return data || [];
+    } catch (err: any) {
+      toast.error(`Erreur: ${err.message}`);
+      return [];
+    }
+  };
+
   useEffect(() => {
     if (user) {
       checkSubscription();
@@ -93,5 +144,7 @@ export const useSubscription = () => {
     isSubscribed: !!subscription,
     isPremium: subscription?.planType === "premium",
     isStandard: subscription?.planType === "standard",
+    updateUserSubscription,
+    getAllSubscriptions,
   };
 };
