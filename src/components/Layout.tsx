@@ -31,7 +31,7 @@ const Layout: React.FC = () => {
       <Toaster position="top-right" />
       <Sidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
       
-      <div className="flex flex-col flex-grow overflow-hidden">
+      <div className="flex flex-col w-full">
         {/* Header */}
         <header className="h-16 border-b flex items-center justify-between px-6">
           <div></div>
@@ -96,10 +96,9 @@ const Layout: React.FC = () => {
         {/* Main content */}
         <main 
           className={cn(
-            "flex-grow p-6 overflow-y-auto",
+            "flex-1 p-6 overflow-y-auto",
             sidebarCollapsed ? "ml-[70px]" : "ml-[240px]"
           )}
-          style={{ width: sidebarCollapsed ? "calc(100% - 70px)" : "calc(100% - 240px)" }}
         >
           <Outlet />
         </main>
