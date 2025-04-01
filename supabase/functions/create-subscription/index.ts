@@ -33,24 +33,29 @@ serve(async (req) => {
       );
     }
 
-    // Create Supabase client
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    
-    // Get user from auth header
+    // Get authorization header
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(
-        JSON.stringify({ error: "Non autorisé" }),
+        JSON.stringify({ error: "Non autorisé - En-tête d'autorisation manquant" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
       );
     }
     
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    // Create Supabase client
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: {
+        headers: { Authorization: authHeader },
+      },
+    });
+    
+    // Get user from auth header
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
     
     if (userError || !user) {
+      console.error("Authentication error:", userError);
       return new Response(
-        JSON.stringify({ error: "Utilisateur non authentifié" }),
+        JSON.stringify({ error: userError?.message || "Utilisateur non authentifié" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
       );
     }

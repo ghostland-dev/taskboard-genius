@@ -32,12 +32,14 @@ export const useSubscription = () => {
       const { data, error } = await supabase.functions.invoke("check-subscription");
 
       if (error) {
+        console.error("Subscription check error:", error);
         setError(error.message);
         toast.error("Erreur lors de la vérification de l'abonnement");
       } else {
         setSubscription(data.subscription);
       }
     } catch (err: any) {
+      console.error("Subscription check exception:", err);
       setError(err.message);
       toast.error("Erreur lors de la vérification de l'abonnement");
     } finally {
@@ -57,12 +59,14 @@ export const useSubscription = () => {
       });
 
       if (error) {
+        console.error("Checkout session error:", error);
         toast.error("Erreur lors de la création de la session");
         return null;
       }
 
       return data.sessionUrl;
-    } catch (err) {
+    } catch (err: any) {
+      console.error("Checkout session exception:", err);
       toast.error("Erreur lors de la création de la session");
       return null;
     }
