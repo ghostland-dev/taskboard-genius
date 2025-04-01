@@ -2,7 +2,7 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { CalendarDays, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { CalendarDays, CheckCircle, Clock, AlertCircle, Activity } from "lucide-react"; // Added Activity import
 import { Task } from "@/contexts/TaskContext";
 import { formatDistance } from "date-fns";
 import { fr } from "date-fns/locale";
