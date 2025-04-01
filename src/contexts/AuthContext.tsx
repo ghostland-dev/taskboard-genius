@@ -73,6 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
+        console.log("Auth state changed:", event, currentSession?.user?.id);
         setSession(currentSession);
 
         if (currentSession?.user) {
@@ -88,6 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Check current session
     supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
+      console.log("Current session:", currentSession?.user?.id);
       setSession(currentSession);
 
       if (currentSession?.user) {
@@ -124,20 +126,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signup = async (email: string, password: string, name: string) => {
     try {
       setLoading(true);
+      // Changed to signUp without email confirmation
       const { error } = await supabase.auth.signUp({ 
         email, 
         password,
         options: {
           data: {
             name
-          }
+          },
+          emailRedirectTo: window.location.origin + '/login',
         }
       });
       
       if (error) {
         toast.error(error.message);
       } else {
-        toast.success("Compte créé avec succès. Vérifiez votre email pour confirmer.");
+        // No longer telling users to check email for confirmation
+        toast.success("Compte créé avec succès. Vous pouvez maintenant vous connecter.");
       }
     } catch (error) {
       toast.error("Une erreur est survenue lors de l'inscription");
