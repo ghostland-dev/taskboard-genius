@@ -16,6 +16,8 @@ services:
     depends_on:
       - supabase-db
       - supabase-api
+      - supabase-auth
+      - mailhog
 
   supabase-db:
     image: supabase/postgres:15.1.0.117
@@ -26,6 +28,10 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
+      SUPABASE_URL: "http://kong:8000"
+      SUPABASE_PUBLIC_URL: "${VITE_SUPABASE_URL}"
+      SUPABASE_ANON_KEY: "${VITE_SUPABASE_ANON_KEY}"
+      SUPABASE_SERVICE_ROLE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndndndjcnVtdWp4d3FjdnBhc3h5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczODA3ODcxMSwiZXhwIjoyMDUzNjU0NzExfQ.3tGInxr4P89o6B5MPjQz6-IAlOUNzhYdnHE0XwUdNhI"
     volumes:
       - pg-data:/var/lib/postgresql/data
     networks:
@@ -36,40 +42,79 @@ services:
       timeout: 5s
       retries: 10
 
-  supabase-api:
-    image: supabase/supabase-rest:latest
+  kong:
+    image: kong:2.8.1
     restart: always
     ports:
-      - "8080:8080"
+      - "8000:8000"
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
+      KONG_DNS_ORDER: LAST,A,CNAME
+      KONG_PLUGINS: request-transformer,cors,key-auth,acl
+    volumes:
+      - ./supabase/kong.yml:/etc/kong/kong.yml:ro
+    networks:
+      - app-network
+    depends_on:
+      - supabase-db
+
+  supabase-api:
+    image: postgrest/postgrest:v9.0.1
+    restart: always
+    ports:
+      - "8080:3000"
     environment:
       PGRST_DB_URI: postgres://postgres:postgres@supabase-db:5432/postgres
-      PGRST_DB_SCHEMA: public
+      PGRST_DB_SCHEMA: public,storage
       PGRST_DB_ANON_ROLE: anon
-      PGRST_JWT_SECRET: your-super-secret-jwt-token-with-at-least-32-characters
+      PGRST_JWT_SECRET: "your-super-secret-jwt-token-with-at-least-32-characters"
     depends_on:
       - supabase-db
     networks:
       - app-network
 
   supabase-auth:
-    image: supabase/gotrue:latest
+    image: supabase/gotrue:v2.50.0
     restart: always
     ports:
       - "9999:9999"
     environment:
-      GOTRUE_JWT_SECRET: your-super-secret-jwt-token-with-at-least-32-characters
+      GOTRUE_JWT_SECRET: "your-super-secret-jwt-token-with-at-least-32-characters"
       GOTRUE_DB_DRIVER: postgres
       GOTRUE_API_HOST: 0.0.0.0
       PORT: 9999
-      GOTRUE_DB_DATABASE_URL: postgres://postgres:postgres@supabase-db:5432/postgres
+      GOTRUE_DB_DATABASE_URL: postgres://postgres:postgres@supabase-db:5432/postgres?sslmode=disable
       GOTRUE_SITE_URL: http://localhost:80
       GOTRUE_SMTP_HOST: mailhog
       GOTRUE_SMTP_PORT: 1025
       GOTRUE_SMTP_USER: test
       GOTRUE_SMTP_PASS: test
       GOTRUE_SMTP_ADMIN_EMAIL: admin@example.com
+      GOTRUE_MAILER_AUTOCONFIRM: "true"
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
     depends_on:
       - supabase-db
+    networks:
+      - app-network
+
+  storage:
+    image: supabase/storage-api:v0.34.0
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      ANON_KEY: "${VITE_SUPABASE_ANON_KEY}"
+      SERVICE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndndndjcnVtdWp4d3FjdnBhc3h5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczODA3ODcxMSwiZXhwIjoyMDUzNjU0NzExfQ.3tGInxr4P89o6B5MPjQz6-IAlOUNzhYdnHE0XwUdNhI"
+      PROJECT_REF: "wgvwcrumujxwqcvpasxy"
+      REGION: "eu-west-3"
+      POSTGREST_URL: http://supabase-api:3000
+      PGRST_JWT_SECRET: "your-super-secret-jwt-token-with-at-least-32-characters"
+      DATABASE_URL: postgres://postgres:postgres@supabase-db:5432/postgres?sslmode=disable
+    depends_on:
+      - supabase-db
+      - supabase-api
     networks:
       - app-network
 
@@ -79,6 +124,26 @@ services:
     ports:
       - "8025:8025"
       - "1025:1025"
+    networks:
+      - app-network
+
+  supabase-realtime:
+    image: supabase/realtime:v0.25.2
+    restart: always
+    ports:
+      - "4000:4000"
+    environment:
+      DB_HOST: supabase-db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: postgres
+      PORT: 4000
+      JWT_SECRET: "your-super-secret-jwt-token-with-at-least-32-characters"
+      REPLICATION_MODE: RLS
+      SECURE_CHANNELS: "true"
+    depends_on:
+      - supabase-db
     networks:
       - app-network
 
