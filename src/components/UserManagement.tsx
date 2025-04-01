@@ -1,12 +1,17 @@
 
 import React, { useEffect, useState } from "react";
-import { Loader2, AlertTriangle, Plus, UserPlus, Search } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import UserTable from "./users/UserTable";
 import UserEditDialog from "./users/UserEditDialog";
+import UserCreateDialog from "./users/UserCreateDialog";
+import UserDeleteDialog from "./users/UserDeleteDialog";
+import UserSearch from "./users/UserSearch";
+import UserLoading from "./users/UserLoading";
+import UserEmptyState from "./users/UserEmptyState";
 import { useUserManagement } from "@/hooks/useUserManagement";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import { User } from "@/types/user";
 import { 
   Card, 
   CardContent, 
@@ -15,9 +20,6 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { toast } from "sonner";
-import { User } from "@/types/user";
 
 const UserManagement = () => {
   const {
@@ -89,12 +91,7 @@ const UserManagement = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
-        <p className="ml-2">Chargement des utilisateurs...</p>
-      </div>
-    );
+    return <UserLoading />;
   }
 
   return (
@@ -120,23 +117,13 @@ const UserManagement = () => {
       
       <CardContent>
         {users.length === 0 ? (
-          <div className="bg-slate-50 p-6 rounded-lg flex flex-col items-center justify-center h-64">
-            <AlertTriangle className="h-12 w-12 text-slate-400 mb-4" />
-            <p className="text-center text-slate-600">
-              Aucun utilisateur trouvé. Les utilisateurs apparaîtront ici une fois qu'ils auront créé un compte.
-            </p>
-          </div>
+          <UserEmptyState />
         ) : (
           <div className="space-y-4">
-            <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
-              <Input
-                placeholder="Rechercher un utilisateur..."
-                className="pl-10 bg-slate-50"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
+            <UserSearch 
+              searchQuery={searchQuery} 
+              setSearchQuery={setSearchQuery} 
+            />
             
             <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
               <UserTable 
@@ -177,122 +164,20 @@ const UserManagement = () => {
       />
 
       {/* Dialog de création d'utilisateur */}
-      <AlertDialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Créer un nouvel utilisateur</AlertDialogTitle>
-            <AlertDialogDescription>
-              Veuillez remplir les informations suivantes pour créer un nouvel utilisateur
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="name" className="text-right font-medium">
-                Nom
-              </label>
-              <Input
-                id="name"
-                value={newUserData.name}
-                onChange={(e) => setNewUserData({...newUserData, name: e.target.value})}
-                className="col-span-3"
-                placeholder="Nom complet"
-              />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="email" className="text-right font-medium">
-                Email
-              </label>
-              <Input
-                id="email"
-                type="email"
-                value={newUserData.email}
-                onChange={(e) => setNewUserData({...newUserData, email: e.target.value})}
-                className="col-span-3"
-                placeholder="email@exemple.com"
-              />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label className="text-right font-medium">
-                Rôle
-              </label>
-              <div className="flex flex-wrap gap-2 col-span-3">
-                {["user", "admin", "superadmin"].map((role) => (
-                  <Badge
-                    key={role}
-                    variant={newUserData.role === role ? "default" : "outline"}
-                    className={`cursor-pointer ${
-                      newUserData.role === role ? "bg-brand-500" : ""
-                    }`}
-                    onClick={() => setNewUserData({...newUserData, role: role})}
-                  >
-                    {role === "superadmin" ? "Super Admin" : role === "admin" ? "Admin" : "Utilisateur"}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label className="text-right font-medium">
-                Abonnement
-              </label>
-              <div className="flex flex-wrap gap-2 col-span-3">
-                {["trial", "standard", "premium", "expired"].map((plan) => (
-                  <Badge
-                    key={plan}
-                    variant={newUserData.subscription === plan ? "default" : "outline"}
-                    className={`cursor-pointer ${
-                      newUserData.subscription === plan
-                        ? plan === "premium" 
-                          ? "bg-yellow-500" 
-                          : plan === "standard" 
-                            ? "bg-blue-500" 
-                            : plan === "expired" 
-                              ? "bg-red-500"
-                              : "bg-slate-500"
-                        : ""
-                    }`}
-                    onClick={() => setNewUserData({...newUserData, subscription: plan})}
-                  >
-                    {plan === "premium" 
-                      ? "Premium" 
-                      : plan === "standard" 
-                        ? "Standard" 
-                        : plan === "expired" 
-                          ? "Expiré" 
-                          : "Essai"}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          </div>
-          
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleCreateUser}>Créer</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <UserCreateDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        newUserData={newUserData}
+        setNewUserData={setNewUserData}
+        onCreateUser={handleCreateUser}
+      />
 
       {/* Dialog de confirmation de suppression */}
-      <AlertDialog open={userToDelete !== null} onOpenChange={(open) => !open && setUserToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-            <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer l'utilisateur {userToDelete?.name} ? Cette action est irréversible.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction className="bg-red-500 hover:bg-red-600" onClick={executeDeleteUser}>
-              Supprimer
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <UserDeleteDialog
+        userToDelete={userToDelete}
+        onOpenChange={(open) => !open && setUserToDelete(null)}
+        onDeleteUser={executeDeleteUser}
+      />
     </Card>
   );
 };
