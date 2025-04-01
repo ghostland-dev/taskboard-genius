@@ -56,53 +56,69 @@ serve(async (req) => {
     }
 
     // Check if user already has a Stripe customer ID
-    const { data: customers, error: stripeError } = await stripe.customers.list({
-      email: user.email,
-      limit: 1,
-    });
-
     let customerId;
-    if (customers && customers.data.length > 0) {
-      customerId = customers.data[0].id;
-    } else {
-      // Create a new customer if none exists
-      const customer = await stripe.customers.create({
+    try {
+      const { data: customers } = await stripe.customers.list({
         email: user.email,
-        metadata: {
-          userId: user.id,
-        },
+        limit: 1,
       });
-      customerId = customer.id;
+
+      if (customers && customers.data && customers.data.length > 0) {
+        customerId = customers.data[0].id;
+      } else {
+        // Create a new customer if none exists
+        const customer = await stripe.customers.create({
+          email: user.email,
+          metadata: {
+            userId: user.id,
+          },
+        });
+        customerId = customer.id;
+      }
+    } catch (stripeError) {
+      console.error("Stripe customer error:", stripeError);
+      return new Response(
+        JSON.stringify({ error: "Erreur lors de la vérification du client Stripe" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      );
     }
 
     // Set price based on plan
     const priceId = plan === "standard" 
-      ? "prod_S3CLObpFqxyJmL" // Standard plan product ID
-      : "prod_S3CLSKAjkdYGg8"; // Premium plan product ID
+      ? "price_1PhCnGGRMrfUdZQTVQldVfL5" // Standard plan price ID
+      : "price_1PhCoKGRMrfUdZQTKRXpGCsw"; // Premium plan price ID
 
     // Create checkout session
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
+    try {
+      const session = await stripe.checkout.sessions.create({
+        customer: customerId,
+        line_items: [
+          {
+            price: priceId,
+            quantity: 1,
+          },
+        ],
+        mode: "subscription",
+        success_url: `${returnUrl || req.headers.get("origin")}/settings?success=true`,
+        cancel_url: `${returnUrl || req.headers.get("origin")}/settings?canceled=true`,
+        metadata: {
+          userId: user.id,
+          planType: plan,
         },
-      ],
-      mode: "subscription",
-      success_url: `${returnUrl || req.headers.get("origin")}/settings?success=true`,
-      cancel_url: `${returnUrl || req.headers.get("origin")}/settings?canceled=true`,
-      metadata: {
-        userId: user.id,
-        planType: plan,
-      },
-    });
+      });
 
-    // Return the session URL
-    return new Response(
-      JSON.stringify({ sessionUrl: session.url }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
-    );
+      // Return the session URL
+      return new Response(
+        JSON.stringify({ sessionUrl: session.url }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
+    } catch (sessionError) {
+      console.error("Stripe session error:", sessionError);
+      return new Response(
+        JSON.stringify({ error: "Erreur lors de la création de la session de paiement" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      );
+    }
   } catch (error) {
     console.error("Error creating subscription:", error);
     return new Response(

@@ -25,7 +25,6 @@ const UserAnalytics: React.FC = () => {
       
       <UserAnalyticsCards 
         data={analyticsData} 
-        isLoading={isLoading} 
       />
       
       <UserAnalyticsTabs 
