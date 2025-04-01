@@ -25,11 +25,13 @@ import { Loader2, AlertTriangle } from "lucide-react";
 
 type User = {
   id: string;
-  name: string;
-  email: string;
+  name: string | null;
+  email?: string; // Make email optional since it might not be in the profiles table
   role: string;
   subscription?: SubscriptionPlan;
   created_at?: string;
+  status?: string;
+  updated_at?: string;
 };
 
 const UserManagement = () => {
@@ -44,6 +46,7 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
+      // Fetch profiles data from Supabase
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -54,7 +57,8 @@ const UserManagement = () => {
         return;
       }
 
-      setUsers(data || []);
+      // Cast the data to our User type
+      setUsers(data as User[]);
     } catch (err: any) {
       toast.error(`Erreur: ${err.message}`);
     } finally {
