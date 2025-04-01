@@ -12,7 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Tasks from "./pages/Tasks";
 import Calendar from "./pages/Calendar";
 import Settings from "./pages/Settings";
-import Users from "./pages/Users";
+import Users from "./pages/users"; // Updated import path
 import Analytics from "./pages/Analytics";
 import NotFound from "./pages/NotFound";
 import Index from "./pages/Index";
