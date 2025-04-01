@@ -9,13 +9,18 @@ import AuthHeader from "@/components/auth/AuthHeader";
 import LoginForm from "@/components/auth/LoginForm";
 import SignupForm from "@/components/auth/SignupForm";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated, loading } = useAuth();
   const [activeTab, setActiveTab] = useState<string>("login");
 
+  // Log state for debugging
+  console.log("Login page state:", { isAuthenticated, loading });
+
   useEffect(() => {
+    // This effect will run when isAuthenticated or loading changes
     if (isAuthenticated && !loading) {
       console.log("User is authenticated, redirecting to dashboard");
       navigate("/dashboard", { replace: true });

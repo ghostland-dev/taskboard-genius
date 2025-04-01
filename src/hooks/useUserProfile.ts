@@ -6,9 +6,11 @@ import { UserProfile } from "@/types/auth";
 export const useUserProfile = () => {
   const loadUserProfile = async (userId: string, userSession: Session | null): Promise<UserProfile | null> => {
     try {
+      console.log("Loading user profile for userId:", userId);
+      
       // First check if we have a valid session
       if (!userSession?.user) {
-        console.warn("Session manquante lors du chargement du profil");
+        console.warn("Session missing when loading profile");
         return null;
       }
 
@@ -20,7 +22,7 @@ export const useUserProfile = () => {
         .single();
 
       if (error) {
-        console.error("Erreur chargement profil:", error);
+        console.error("Error loading profile:", error);
         
         // Return a minimal profile when the table might not exist yet
         return {
@@ -30,6 +32,8 @@ export const useUserProfile = () => {
           role: "user" as "user" | "admin" | "superadmin"
         };
       }
+
+      console.log("Profile data loaded:", data);
 
       // Ensure the role value conforms to the UserProfile type
       const validatedRole = (data.role === 'user' || data.role === 'admin' || data.role === 'superadmin') 
@@ -42,7 +46,7 @@ export const useUserProfile = () => {
         role: validatedRole
       } as UserProfile;
     } catch (error) {
-      console.error("Erreur loadUserProfile:", error);
+      console.error("Error in loadUserProfile:", error);
       
       // In case of error, return minimal profile
       if (userSession?.user) {

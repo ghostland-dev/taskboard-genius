@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,11 +12,22 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const LoginForm: React.FC = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+
+  // Log authentication state for debugging
+  console.log("LoginForm: isAuthenticated =", isAuthenticated);
+  
+  useEffect(() => {
+    // If already authenticated, redirect to dashboard
+    if (isAuthenticated) {
+      console.log("LoginForm: User is authenticated, redirecting to dashboard");
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,21 +35,21 @@ const LoginForm: React.FC = () => {
     setError(null);
     
     try {
-      console.log("Tentative de connexion avec:", { email });
+      console.log("Attempting login with:", { email });
       const result = await login(email, password);
-      console.log("Résultat de la connexion:", result);
+      console.log("Login result:", result);
       
       if (result.success) {
         toast.success("Connexion réussie");
-        // The redirection will be handled by the AuthContext through the useEffect in the Login component
+        // The AuthContext will handle the loading state and redirection
       } else {
         setError("Identifiants invalides. Vérifiez que l'email et le mot de passe sont corrects.");
-        console.error("Échec de connexion:", result);
+        console.error("Login failed:", result);
+        setIsLoading(false);
       }
     } catch (err) {
-      console.error("Erreur lors de la connexion:", err);
+      console.error("Error during login:", err);
       setError("Une erreur inattendue s'est produite. Veuillez réessayer.");
-    } finally {
       setIsLoading(false);
     }
   };

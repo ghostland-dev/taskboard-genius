@@ -35,6 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const initAuth = async () => {
       try {
+        console.log("Initializing authentication...");
         setLoading(true);
         
         // Set up auth state listener FIRST
@@ -88,8 +89,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string) => {
     try {
+      console.log("Login attempt starting...");
       setLoading(true);
       const result = await authService.login(email, password);
+      console.log("Login result:", result);
       return result;
     } catch (error) {
       console.error("Login error in context:", error);
