@@ -16,21 +16,18 @@ const UserAnalyticsHeader: React.FC<UserAnalyticsHeaderProps> = ({
       <div>
         <h1 className="text-3xl font-bold gradient-heading">Analyse des utilisateurs</h1>
         <p className="text-muted-foreground mt-1">
-          Statistiques et tendances des utilisateurs de la plateforme
+          Consultez les statistiques détaillées sur vos utilisateurs
         </p>
       </div>
-      <Select
-        value={timeRange}
-        onValueChange={onTimeRangeChange}
-      >
-        <SelectTrigger className="w-[180px]">
+      <Select value={timeRange} onValueChange={onTimeRangeChange}>
+        <SelectTrigger className="w-36">
           <SelectValue placeholder="Période" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="7">7 derniers jours</SelectItem>
-          <SelectItem value="30">30 derniers jours</SelectItem>
-          <SelectItem value="90">90 derniers jours</SelectItem>
-          <SelectItem value="365">Dernière année</SelectItem>
+          <SelectItem value="7">7 jours</SelectItem>
+          <SelectItem value="30">30 jours</SelectItem>
+          <SelectItem value="90">90 jours</SelectItem>
+          <SelectItem value="365">365 jours</SelectItem>
         </SelectContent>
       </Select>
     </div>

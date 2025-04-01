@@ -14,8 +14,7 @@ const AccessDeniedAlert: React.FC = () => {
         <AlertTriangle className="h-4 w-4" />
         <AlertTitle>Accès non autorisé</AlertTitle>
         <AlertDescription>
-          Vous n'avez pas les permissions nécessaires pour accéder à cette page. 
-          Cette section est réservée aux administrateurs.
+          Vous n'avez pas les permissions nécessaires pour accéder à cette page. Cette section est réservée aux administrateurs.
         </AlertDescription>
         <Button 
           className="mt-4" 

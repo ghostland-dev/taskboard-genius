@@ -1,99 +1,93 @@
 
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardHeader, CardDescription, CardTitle, CardContent } from "@/components/ui/card";
-import UserGrowthChart from "@/components/analytics/UserGrowthChart";
-import SubscriptionDistribution from "@/components/analytics/SubscriptionDistribution";
-import UserActivityChart from "@/components/analytics/UserActivityChart";
-import UserStatusChart from "@/components/analytics/UserStatusChart";
-import { UserStats } from "@/types/user";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface UserAnalyticsTabsProps {
   timeRange: number;
-  analyticsData: UserStats;
-  isLoading?: boolean;
+  analyticsData: any;
+  isLoading: boolean;
 }
 
 const UserAnalyticsTabs: React.FC<UserAnalyticsTabsProps> = ({ 
   timeRange, 
-  analyticsData,
+  analyticsData, 
   isLoading 
 }) => {
   return (
     <Tabs defaultValue="growth" className="w-full">
-      <TabsList>
+      <TabsList className="mb-4">
         <TabsTrigger value="growth">Croissance</TabsTrigger>
-        <TabsTrigger value="subscriptions">Abonnements</TabsTrigger>
         <TabsTrigger value="activity">Activité</TabsTrigger>
         <TabsTrigger value="status">Statut</TabsTrigger>
+        <TabsTrigger value="subscription">Abonnements</TabsTrigger>
       </TabsList>
-
+      
       <TabsContent value="growth">
         <Card>
           <CardHeader>
             <CardTitle>Croissance des utilisateurs</CardTitle>
-            <CardDescription>
-              Nouveaux utilisateurs sur la période sélectionnée
-            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
-              <UserGrowthChart timeRange={timeRange} />
-            </div>
+            {isLoading ? (
+              <Skeleton className="h-[350px] w-full" />
+            ) : (
+              <div className="h-[350px] flex items-center justify-center bg-slate-50 rounded-md">
+                <p className="text-slate-500">Graphique de croissance des utilisateurs sur {timeRange} jours</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </TabsContent>
-
-      <TabsContent value="subscriptions">
-        <Card>
-          <CardHeader>
-            <CardTitle>Distribution des abonnements</CardTitle>
-            <CardDescription>
-              Répartition des utilisateurs par type d'abonnement
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-80">
-              <SubscriptionDistribution 
-                data={[
-                  { name: 'Premium', value: analyticsData.premiumUsers },
-                  { name: 'Standard', value: analyticsData.standardUsers },
-                  { name: 'Essai', value: analyticsData.trialUsers }
-                ]} 
-              />
-            </div>
-          </CardContent>
-        </Card>
-      </TabsContent>
-
+      
       <TabsContent value="activity">
         <Card>
           <CardHeader>
-            <CardTitle>Activité des utilisateurs</CardTitle>
-            <CardDescription>
-              Nombre de connexions et d'actions par jour
-            </CardDescription>
+            <CardTitle>Activité utilisateur</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
-              <UserActivityChart timeRange={timeRange} />
-            </div>
+            {isLoading ? (
+              <Skeleton className="h-[350px] w-full" />
+            ) : (
+              <div className="h-[350px] flex items-center justify-center bg-slate-50 rounded-md">
+                <p className="text-slate-500">Graphique d'activité utilisateur sur {timeRange} jours</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </TabsContent>
-
+      
       <TabsContent value="status">
         <Card>
           <CardHeader>
             <CardTitle>Statut des utilisateurs</CardTitle>
-            <CardDescription>
-              Répartition des utilisateurs par statut
-            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
-              <UserStatusChart />
-            </div>
+            {isLoading ? (
+              <Skeleton className="h-[350px] w-full" />
+            ) : (
+              <div className="h-[350px] flex items-center justify-center bg-slate-50 rounded-md">
+                <p className="text-slate-500">Graphique de statut des utilisateurs</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
+      
+      <TabsContent value="subscription">
+        <Card>
+          <CardHeader>
+            <CardTitle>Distribution des abonnements</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <Skeleton className="h-[350px] w-full" />
+            ) : (
+              <div className="h-[350px] flex items-center justify-center bg-slate-50 rounded-md">
+                <p className="text-slate-500">Graphique de distribution des abonnements</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </TabsContent>

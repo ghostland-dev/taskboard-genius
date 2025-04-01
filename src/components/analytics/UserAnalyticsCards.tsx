@@ -1,22 +1,29 @@
 
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, TrendingUp, PieChart } from "lucide-react";
-import { UserStats } from "@/types/user";
+import { TrendingUp, Users, UserCheck, Clock } from "lucide-react";
 
 interface UserAnalyticsCardsProps {
-  data: UserStats;
+  data: any;  // Type à définir selon la structure des données
 }
 
 const UserAnalyticsCards: React.FC<UserAnalyticsCardsProps> = ({ data }) => {
+  // Valeurs fictives pour la démo
+  const stats = {
+    totalUsers: data?.totalUsers || 128,
+    activeUsers: data?.activeUsers || 89,
+    retentionRate: data?.retentionRate || "76%",
+    avgSessionTime: data?.avgSessionTime || "24 min"
+  };
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <Card>
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-muted-foreground text-sm">Total des utilisateurs</p>
-              <p className="text-3xl font-bold">{data.totalUsers}</p>
+              <p className="text-muted-foreground text-sm">Utilisateurs totaux</p>
+              <p className="text-3xl font-bold">{stats.totalUsers}</p>
             </div>
             <div className="bg-blue-100 p-3 rounded-full">
               <Users className="text-blue-600" />
@@ -24,44 +31,44 @@ const UserAnalyticsCards: React.FC<UserAnalyticsCardsProps> = ({ data }) => {
           </div>
         </CardContent>
       </Card>
-
+      
       <Card>
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-muted-foreground text-sm">Utilisateurs actifs</p>
-              <p className="text-3xl font-bold">{data.activeUsers}</p>
+              <p className="text-3xl font-bold">{stats.activeUsers}</p>
             </div>
             <div className="bg-green-100 p-3 rounded-full">
-              <TrendingUp className="text-green-600" />
+              <UserCheck className="text-green-600" />
             </div>
           </div>
         </CardContent>
       </Card>
-
+      
       <Card>
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-muted-foreground text-sm">Utilisateurs premium</p>
-              <p className="text-3xl font-bold">{data.premiumUsers}</p>
+              <p className="text-muted-foreground text-sm">Taux de rétention</p>
+              <p className="text-3xl font-bold">{stats.retentionRate}</p>
             </div>
             <div className="bg-purple-100 p-3 rounded-full">
-              <PieChart className="text-purple-600" />
+              <TrendingUp className="text-purple-600" />
             </div>
           </div>
         </CardContent>
       </Card>
-
+      
       <Card>
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-muted-foreground text-sm">Nouveaux utilisateurs</p>
-              <p className="text-3xl font-bold">{data.newUsersThisMonth}</p>
+              <p className="text-muted-foreground text-sm">Temps moyen</p>
+              <p className="text-3xl font-bold">{stats.avgSessionTime}</p>
             </div>
             <div className="bg-amber-100 p-3 rounded-full">
-              <Users className="text-amber-600" />
+              <Clock className="text-amber-600" />
             </div>
           </div>
         </CardContent>
