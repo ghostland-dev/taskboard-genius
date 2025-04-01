@@ -3,18 +3,35 @@ import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
+import UserGrowthChart from "./UserGrowthChart";
+import UserActivityChart from "./UserActivityChart";
+import UserStatusChart from "./UserStatusChart";
+import SubscriptionDistribution from "./SubscriptionDistribution";
 
 interface UserAnalyticsTabsProps {
   timeRange: number;
   analyticsData: any;
   isLoading: boolean;
+  error: string | null;
 }
 
 const UserAnalyticsTabs: React.FC<UserAnalyticsTabsProps> = ({ 
   timeRange, 
   analyticsData, 
-  isLoading 
+  isLoading,
+  error
 }) => {
+  if (error) {
+    return (
+      <Alert variant="destructive" className="mt-6">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
     <Tabs defaultValue="growth" className="w-full">
       <TabsList className="mb-4">
@@ -32,9 +49,13 @@ const UserAnalyticsTabs: React.FC<UserAnalyticsTabsProps> = ({
           <CardContent>
             {isLoading ? (
               <Skeleton className="h-[350px] w-full" />
+            ) : analyticsData.growthData && analyticsData.growthData.length > 0 ? (
+              <div className="h-[350px]">
+                <UserGrowthChart data={analyticsData.growthData} />
+              </div>
             ) : (
               <div className="h-[350px] flex items-center justify-center bg-slate-50 rounded-md">
-                <p className="text-slate-500">Graphique de croissance des utilisateurs sur {timeRange} jours</p>
+                <p className="text-slate-500">Aucune donnée de croissance disponible pour {timeRange} jours</p>
               </div>
             )}
           </CardContent>
@@ -49,9 +70,13 @@ const UserAnalyticsTabs: React.FC<UserAnalyticsTabsProps> = ({
           <CardContent>
             {isLoading ? (
               <Skeleton className="h-[350px] w-full" />
+            ) : analyticsData.activityData && analyticsData.activityData.length > 0 ? (
+              <div className="h-[350px]">
+                <UserActivityChart data={analyticsData.activityData} />
+              </div>
             ) : (
               <div className="h-[350px] flex items-center justify-center bg-slate-50 rounded-md">
-                <p className="text-slate-500">Graphique d'activité utilisateur sur {timeRange} jours</p>
+                <p className="text-slate-500">Aucune donnée d'activité disponible pour {timeRange} jours</p>
               </div>
             )}
           </CardContent>
@@ -66,9 +91,13 @@ const UserAnalyticsTabs: React.FC<UserAnalyticsTabsProps> = ({
           <CardContent>
             {isLoading ? (
               <Skeleton className="h-[350px] w-full" />
+            ) : analyticsData.statusData && analyticsData.statusData.length > 0 ? (
+              <div className="h-[350px]">
+                <UserStatusChart data={analyticsData.statusData} />
+              </div>
             ) : (
               <div className="h-[350px] flex items-center justify-center bg-slate-50 rounded-md">
-                <p className="text-slate-500">Graphique de statut des utilisateurs</p>
+                <p className="text-slate-500">Aucune donnée de statut disponible</p>
               </div>
             )}
           </CardContent>
@@ -83,9 +112,13 @@ const UserAnalyticsTabs: React.FC<UserAnalyticsTabsProps> = ({
           <CardContent>
             {isLoading ? (
               <Skeleton className="h-[350px] w-full" />
+            ) : analyticsData.subscriptionData && analyticsData.subscriptionData.length > 0 ? (
+              <div className="h-[350px]">
+                <SubscriptionDistribution data={analyticsData.subscriptionData} />
+              </div>
             ) : (
               <div className="h-[350px] flex items-center justify-center bg-slate-50 rounded-md">
-                <p className="text-slate-500">Graphique de distribution des abonnements</p>
+                <p className="text-slate-500">Aucune donnée d'abonnement disponible</p>
               </div>
             )}
           </CardContent>
