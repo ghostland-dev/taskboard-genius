@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Navigate, Outlet } from "react-router-dom";
 import { Toaster } from "sonner";
 import { cn } from "@/lib/utils";
-import { Bell, Search, Settings } from "lucide-react";
+import { Bell, Search, Settings, LogOut } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
