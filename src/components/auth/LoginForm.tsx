@@ -24,16 +24,13 @@ const LoginForm: React.FC = () => {
     setError(null);
     
     try {
-      console.log("Tentative de connexion avec:", { email, password });
+      console.log("Tentative de connexion avec:", { email });
       const result = await login(email, password);
       console.log("Résultat de la connexion:", result);
       
       if (result.success) {
         toast.success("Connexion réussie");
-        // Force navigation to dashboard
-        setTimeout(() => {
-          navigate("/dashboard", { replace: true });
-        }, 300);
+        // The redirection will be handled by the AuthContext through the useEffect in the Login component
       } else {
         setError("Identifiants invalides. Vérifiez que l'email et le mot de passe sont corrects.");
         console.error("Échec de connexion:", result);

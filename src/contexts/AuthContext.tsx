@@ -33,68 +33,95 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const authListener = supabase.auth.onAuthStateChange(async (_event, currentSession) => {
-      console.log("Auth state changed:", _event, !!currentSession);
-      setSession(currentSession);
-      
-      if (currentSession?.user) {
-        try {
-          const profile = await loadUserProfile(currentSession.user.id, currentSession);
-          setUser(profile);
-        } catch (error) {
-          console.error("Error loading user profile on auth change:", error);
-          setUser(null);
-        }
-      } else {
-        setUser(null);
-      }
-      
-      setLoading(false);
-    }).data.subscription;
+    const initAuth = async () => {
+      try {
+        setLoading(true);
+        
+        // Set up auth state listener FIRST
+        const authListener = supabase.auth.onAuthStateChange(async (_event, currentSession) => {
+          console.log("Auth state changed:", _event, !!currentSession);
+          setSession(currentSession);
+          
+          if (currentSession?.user) {
+            try {
+              const profile = await loadUserProfile(currentSession.user.id, currentSession);
+              setUser(profile);
+            } catch (error) {
+              console.error("Error loading user profile on auth change:", error);
+              setUser(null);
+            }
+          } else {
+            setUser(null);
+          }
+          
+          setLoading(false);
+        });
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(async ({ data: { session: currentSession } }) => {
-      console.log("Initial session check:", !!currentSession);
-      setSession(currentSession);
-      
-      if (currentSession?.user) {
-        try {
-          const profile = await loadUserProfile(currentSession.user.id, currentSession);
-          setUser(profile);
-        } catch (error) {
-          console.error("Error loading initial user profile:", error);
+        // THEN check for existing session
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        console.log("Initial session check:", !!currentSession);
+        setSession(currentSession);
+        
+        if (currentSession?.user) {
+          try {
+            const profile = await loadUserProfile(currentSession.user.id, currentSession);
+            setUser(profile);
+          } catch (error) {
+            console.error("Error loading initial user profile:", error);
+          }
         }
+        
+        setLoading(false);
+        
+        return () => {
+          authListener.data.subscription?.unsubscribe();
+        };
+      } catch (error) {
+        console.error("Error initializing auth:", error);
+        setLoading(false);
       }
-      
-      setLoading(false);
-    });
-
-    return () => {
-      authListener?.unsubscribe();
     };
+
+    initAuth();
   }, []);
 
   const login = async (email: string, password: string) => {
-    setLoading(true);
-    const result = await authService.login(email, password);
-    setLoading(false);
-    return result;
+    try {
+      setLoading(true);
+      const result = await authService.login(email, password);
+      return result;
+    } catch (error) {
+      console.error("Login error in context:", error);
+      return { success: false };
+    } finally {
+      // Don't set loading to false here, it will be updated by the auth listener
+    }
   };
 
   const signup = async (email: string, password: string, name: string): Promise<boolean> => {
-    setLoading(true);
-    const result = await authService.signup(email, password, name);
-    setLoading(false);
-    return result;
+    try {
+      setLoading(true);
+      const result = await authService.signup(email, password, name);
+      return result;
+    } catch (error) {
+      console.error("Signup error in context:", error);
+      return false;
+    } finally {
+      // Don't set loading to false here, it will be updated by the auth listener
+    }
   };
 
   const logout = async () => {
-    setLoading(true);
-    await authService.logout();
-    setUser(null);
-    setSession(null);
-    setLoading(false);
+    try {
+      setLoading(true);
+      await authService.logout();
+      setUser(null);
+      setSession(null);
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const value: AuthContextType = {

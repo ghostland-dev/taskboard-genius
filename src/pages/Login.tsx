@@ -26,8 +26,19 @@ const Login: React.FC = () => {
     setActiveTab("login");
   };
 
-  // If still loading, show nothing until we know the auth state
+  // If still loading, show a minimal loading indicator
   if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse">Chargement...</div>
+      </div>
+    );
+  }
+
+  // If already authenticated but navigation hasn't happened yet, force it
+  if (isAuthenticated) {
+    console.log("User is already authenticated, redirecting to dashboard immediately");
+    setTimeout(() => navigate("/dashboard", { replace: true }), 0);
     return null;
   }
 
