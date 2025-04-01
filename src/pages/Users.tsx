@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -81,9 +80,9 @@ const UsersPage: React.FC = () => {
       try {
         setLoading(true);
         
-        // Get users from the profiles table
-        const { data: profiles, error } = await supabase
-          .from('profiles')
+        // Get users from the profiles table with type assertion
+        const { data: profiles, error } = await (supabase
+          .from('profiles') as any)
           .select('*');
         
         if (error) {
@@ -92,9 +91,9 @@ const UsersPage: React.FC = () => {
           return;
         }
         
-        // Get user stats
-        const { data: statsData, error: statsError } = await supabase
-          .from('user_stats')
+        // Get user stats with type assertion
+        const { data: statsData, error: statsError } = await (supabase
+          .from('user_stats') as any)
           .select('user_id, tasks_count');
           
         if (statsError) {
@@ -102,8 +101,6 @@ const UsersPage: React.FC = () => {
         }
         
         // Get user emails from auth.users
-        // This requires a superadmin to have the right to access the auth.users table
-        // For production, you might want to implement this differently
         const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
         
         if (authError) {
@@ -114,11 +111,11 @@ const UsersPage: React.FC = () => {
         let usersWithEmail: UserProfile[] = [];
         
         if (profiles) {
-          usersWithEmail = profiles.map(profile => {
+          usersWithEmail = profiles.map((profile: any) => {
             // Find matching auth user to get email
             const authUser = authUsers?.users?.find(u => u.id === profile.id);
             // Find user stats
-            const userStats = statsData?.find(s => s.user_id === profile.id);
+            const userStats = statsData?.find((s: any) => s.user_id === profile.id);
             
             return {
               ...profile,
@@ -156,8 +153,9 @@ const UsersPage: React.FC = () => {
   // Handle user role change
   const handleRoleChange = async (userId: string, newRole: string) => {
     try {
-      const { error } = await supabase
-        .from('profiles')
+      // Type assertion for the profiles table
+      const { error } = await (supabase
+        .from('profiles') as any)
         .update({ role: newRole })
         .eq('id', userId);
         
@@ -179,8 +177,9 @@ const UsersPage: React.FC = () => {
   // Handle user status change
   const handleStatusChange = async (userId: string, newStatus: string) => {
     try {
-      const { error } = await supabase
-        .from('profiles')
+      // Type assertion for profiles table
+      const { error } = await (supabase
+        .from('profiles') as any)
         .update({ status: newStatus })
         .eq('id', userId);
         
@@ -236,9 +235,9 @@ const UsersPage: React.FC = () => {
       }
       
       if (data.user) {
-        // Update the user's profile with role and subscription
-        const { error: profileError } = await supabase
-          .from('profiles')
+        // Type assertion for profiles table
+        const { error: profileError } = await (supabase
+          .from('profiles') as any)
           .update({
             role: newUser.role,
             status: newUser.status,
@@ -263,7 +262,7 @@ const UsersPage: React.FC = () => {
           });
           
           // Refresh user list
-          const newUserProfile = {
+          const newUserProfile: UserProfile = {
             id: data.user.id,
             name: newUser.name,
             email: newUser.email,

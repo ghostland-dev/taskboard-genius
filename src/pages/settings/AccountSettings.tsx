@@ -53,9 +53,9 @@ const AccountSettings: React.FC = () => {
     try {
       setUpdating(true);
       
-      // Only update name in the profiles table
-      const { error } = await supabase
-        .from('profiles')
+      // Only update name in the profiles table using type assertion
+      const { error } = await (supabase
+        .from('profiles') as any)
         .update({ name: formData.name })
         .eq('id', user.id);
         

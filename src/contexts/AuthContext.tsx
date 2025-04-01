@@ -41,8 +41,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Load user profile data from Supabase
   const loadUserProfile = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from("profiles")
+      // Type assertion to tell TypeScript to trust that "profiles" exists
+      const { data, error } = await (supabase
+        .from("profiles") as any)
         .select("*")
         .eq("id", userId)
         .single();
